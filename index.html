@@ -22,7 +22,20 @@
       .account-menu-panel button { width: 100%; margin: 0; white-space: nowrap; }
       #app > header > p { flex-basis: 100%; margin: 0; }
       #app > main { flex: 1; display: flex; }
-      #app > main > p { margin: 1rem; }
+      .site-status { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; }
+      .site-status h2, .site-status p { margin: 0; }
+      .dots::after {
+        animation: dots 0.7s linear infinite;
+        content: "";
+        display: inline-block;
+        width: 3ch;
+      }
+      @keyframes dots {
+        0% { content: ""; }
+        25% { content: "."; }
+        50% { content: ".."; }
+        75% { content: "..."; }
+      }
       sw-transclude { display: block; flex: 1; min-width: 0; }
       .primary-action { background: #1769d1; border: 1px solid #1769d1; color: white; }
       .primary-action:hover:not(:disabled) { background: #0e55ac; color: white; }
@@ -245,7 +258,7 @@
     </script>
   </head>
   <body>
-    <div id="app"><main><p>Loading site…</p></main></div>
+    <div id="app"><main><section class="site-status" role="status"><h2 class="dots">Loading</h2></section></main></div>
     <template id="app-template">
       <header>
         <h1><a href="?/">{{ title }}</a></h1>
@@ -286,12 +299,20 @@
       </header>
 
       <main>
-        <p v-if="session === undefined || isFirstPoll" role="status">
-          {{ discoveryError ? "Could not check site versions. Retrying…" : "Loading site…" }}
-        </p>
-        <p v-else-if="!selectedVersion">No version from an admin is available yet.</p>
-        <p v-else-if="mediaError" role="alert">Could not load this version: {{ mediaError }}</p>
-        <p v-else-if="!displayed || displayed.versionUrl !== selectedVersion.url" role="status">Loading site…</p>
+        <section v-if="session === undefined || isFirstPoll" class="site-status" role="status">
+          <p v-if="discoveryError">Could not check site versions. Retrying…</p>
+          <h2 v-else class="dots">Loading</h2>
+        </section>
+        <section v-else-if="!selectedVersion" class="site-status">
+          <p>No version from an admin is available yet.</p>
+        </section>
+        <section v-else-if="mediaError" class="site-status" role="alert">
+          <p>Could not load this version: {{ mediaError }}</p>
+        </section>
+        <section v-else-if="!displayed || displayed.versionUrl !== selectedVersion.url"
+          class="site-status" role="status">
+          <h2 class="dots">Loading</h2>
+        </section>
         <sw-transclude v-else :id="displayed.id" :name="siteName"
           :srcdoc="displayed.html" :query="siteQuery" route="" autosize="height">
         </sw-transclude>
