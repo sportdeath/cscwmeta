@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>CSCW Meta</title>
+    <script src="https://social.wiki/init.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css" />
+    <style>
+      body { max-width: none; margin: 0; padding: 0; }
+      #app { min-height: 100dvh; display: flex; flex-direction: column; }
+      #app > header { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1rem; padding: .5rem .75rem; border-bottom: 1px solid var(--border); }
+      #app > header h1 { margin: 0; font-size: 1.3rem; line-height: 1.2; }
+      .header-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; margin-left: auto; }
+      .header-actions > button, .account-menu { margin: 0; }
+      .account-menu { position: relative; overflow: visible; }
+      .account-menu[open] { padding-bottom: 0; }
+      .account-menu summary { border-radius: 6px; }
+      .account-menu[open] summary { margin-bottom: 0; }
+      .account-menu-panel { position: absolute; z-index: 1; top: calc(100% + .25rem); right: 0; min-width: 100%; box-sizing: border-box; padding: .25rem; border: 1px solid var(--border); border-radius: .35rem; background: var(--background); }
+      .account-menu-panel button { width: 100%; margin: 0; white-space: nowrap; }
+      #app > header > p { flex-basis: 100%; margin: 0; }
+      #app > main { flex: 1; display: flex; }
+      #app > main > p { margin: 1rem; }
+      sw-transclude { display: block; flex: 1; min-width: 0; }
+      .primary-action { background: #1769d1; border: 1px solid #1769d1; color: white; }
+      .primary-action:hover:not(:disabled) { background: #0e55ac; color: white; }
+      a.primary-action { display: inline-block; padding: .5rem .75rem; border-radius: .35rem; text-decoration: none; }
+      dialog { width: min(32rem, calc(100vw - 2rem)); box-sizing: border-box; background: var(--background); color: var(--text-main); }
+      .dialog-actions { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+      .dialog-actions form { margin: 0; }
+    </style>
+    <script type="module">
+      import { computed, createApp, onScopeDispose, ref, watch } from "vue";
+      import {
+        GraffitiPlugin,
+        useGraffiti,
+        useGraffitiDiscover,
+        useGraffitiSession,
+      } from "@graffiti-garden/wrapper-vue";
+
+      // Configure this file for one Social.Wiki site before hosting it.
+      const siteName = "cscw.meta";
+      const title = "CSCW Meta";
+      const admins = [
+        "did:plc:numtqzbw74lmrguyvpzq6uf5", // Theia Henderson
+        "did:plc:7t5bdvkgp3zy7gtdhf4dtjk2"  // David Karger
+      ];
+      const hostedUrl = "https://cscwmeta.org"; // This wrapper's public URL.
+      document.title = title;
+
+      function versionSchema(actors) {
+        return {
+          properties: {
+            actor: { enum: actors },
+            value: {
+              type: "object",
+              required: ["action", "site name", "changes", "document", "time"],
+              properties: {
+                action: { const: "Publish site" },
+                "site name": { const: siteName },
+                changes: { type: "string" },
+                document: { type: "string" },
+                time: { type: "number" },
+                "previous versions": { type: "array", items: { type: "string" } },
+              },
+            },
+          },
+          required: ["actor", "value"],
+        };
+      }
+
+      // Respect publication history first, then use time and URL to order
+      // independent branches. This mirrors Social.Wiki's View lens ordering.
+      function newestFirst(versions) {
+        const byUrl = new Map(versions.map((version) => [version.url, version]));
+        const parents = new Map();
+        const children = new Map(versions.map((version) => [version.url, []]));
+        for (const version of versions) {
+          const knownParents = [...new Set(version.value["previous versions"] || [])]
+            .filter((url) => byUrl.has(url));
+          parents.set(version.url, knownParents.length);
+          for (const url of knownParents) children.get(url).push(version.url);
+        }
+        const ready = versions.filter((version) => parents.get(version.url) === 0);
+        const ordered = [];
+        while (ready.length) {
+          ready.sort((a, b) => a.value.time - b.value.time ||
+            a.url.localeCompare(b.url));
+          const version = ready.shift();
+          ordered.push(version);
+          for (const childUrl of children.get(version.url)) {
+            const remaining = parents.get(childUrl) - 1;
+            parents.set(childUrl, remaining);
+            if (remaining === 0) ready.push(byUrl.get(childUrl));
+          }
+        }
+        return ordered.reverse();
+      }
+
+      function setup() {
+        const graffiti = useGraffiti();
+        const session = useGraffitiSession();
+        const isAdmin = computed(() =>
+          !!session.value && admins.includes(session.value.actor)
+        );
+        const publishers = computed(() => [...new Set([
+          ...admins,
+          ...(session.value?.actor ? [session.value.actor] : []),
+        ])]);
+        const { objects, isFirstPoll, error: discoveryError } = useGraffitiDiscover(
+          () => session.value !== undefined ? ["site:" + siteName] : [],
+          () => versionSchema(publishers.value),
+        );
+
+        const versions = computed(() => newestFirst(objects.value));
+        const myVersion = computed(() => versions.value.find((version) =>
+          version.actor === session.value?.actor
+        ));
+        const adminVersion = computed(() => versions.value.find((version) =>
+          admins.includes(version.actor)
+        ));
+        const viewingAdminVersion = ref(false);
+        const selectedVersion = computed(() =>
+          viewingAdminVersion.value
+            ? adminVersion.value || myVersion.value
+            : myVersion.value || adminVersion.value
+        );
+        const newerAdminVersion = computed(() =>
+          myVersion.value && adminVersion.value &&
+          versions.value.indexOf(adminVersion.value) < versions.value.indexOf(myVersion.value)
+        );
+
+        // The HTML runs in a separate permission scope. Change its ID when
+        // its contents change so permissions from old code are not reused.
+        const displayed = ref(null);
+        const mediaError = ref("");
+        let load = 0;
+        watch(() => selectedVersion.value?.url, async () => {
+          const currentLoad = ++load;
+          displayed.value = null;
+          mediaError.value = "";
+          const version = selectedVersion.value;
+          if (!version) return;
+          try {
+            const media = await graffiti.getMedia(version.value.document, {
+              types: ["text/html"],
+            });
+            const html = await media.data.text();
+            const digest = await crypto.subtle.digest(
+              "SHA-256", new TextEncoder().encode(html)
+            );
+            if (currentLoad !== load) return;
+            const id = [...new Uint8Array(digest)]
+              .map((byte) => byte.toString(16).padStart(2, "0")).join("");
+            displayed.value = { html, id, versionUrl: version.url };
+          } catch (error) {
+            if (currentLoad === load) mediaError.value = error.message || String(error);
+          }
+        }, { immediate: true });
+
+        watch(session, () => { viewingAdminVersion.value = false; });
+        const siteQuery = ref(window.query);
+        function onQueryChange() { siteQuery.value = window.query; }
+        window.addEventListener("querychange", onQueryChange);
+        onScopeDispose(() => window.removeEventListener("querychange", onQueryChange));
+
+        const siteAddress = computed(() =>
+          window.route.composeAddress(siteName, siteQuery.value)
+        );
+        const editUrl = computed(() => {
+          const params = new URLSearchParams();
+          if (displayed.value && displayed.value.versionUrl === selectedVersion.value?.url) {
+            params.set("draft", displayed.value.html);
+          }
+          const returnUrl = new URL(hostedUrl);
+          if (siteQuery.value) returnUrl.hash = siteQuery.value;
+          params.set("redirect_route", returnUrl.href);
+          const address = window.route.composeAddress(
+            "e", window.route.composeQuery(params, siteAddress.value)
+          );
+          return `#/${address}`;
+        });
+
+        const editButton = ref(null);
+        const editDialog = ref(null);
+        function openEditDialog() { editDialog.value?.showModal(); }
+        function restoreFocus() { editButton.value?.focus(); }
+        function closeEditDialogOnBackdrop(event) {
+          const dialog = editDialog.value;
+          if (event.target !== dialog) return;
+          const bounds = dialog.getBoundingClientRect();
+          if (event.clientX < bounds.left || event.clientX > bounds.right ||
+              event.clientY < bounds.top || event.clientY > bounds.bottom) {
+            dialog.close();
+          }
+        }
+
+        const accountMenu = ref(null);
+        function closeAccountMenu() {
+          if (accountMenu.value) accountMenu.value.open = false;
+        }
+        function closeAccountMenuOnOutsideClick(event) {
+          if (!accountMenu.value?.contains(event.target)) closeAccountMenu();
+        }
+        document.addEventListener("pointerdown", closeAccountMenuOnOutsideClick);
+        // Clicking inside the transcluded iframe blurs this window.
+        window.addEventListener("blur", closeAccountMenu);
+        watch(session, closeAccountMenu);
+        onScopeDispose(() => {
+          document.removeEventListener("pointerdown", closeAccountMenuOnOutsideClick);
+          window.removeEventListener("blur", closeAccountMenu);
+        });
+
+        const accountBusy = ref(false);
+        const accountError = ref("");
+        async function changeAccount() {
+          if (accountBusy.value || session.value === undefined) return;
+          accountBusy.value = true;
+          accountError.value = "";
+          try {
+            if (session.value) await graffiti.logout(session.value);
+            else await graffiti.login();
+          } catch (error) {
+            accountError.value = error.message || String(error);
+          } finally {
+            accountBusy.value = false;
+          }
+        }
+
+        return {
+          accountBusy, accountError, accountMenu, changeAccount,
+          closeEditDialogOnBackdrop, discoveryError,
+          displayed, editButton, editDialog, editUrl, adminVersion, admins,
+          isAdmin, isFirstPoll, mediaError, myVersion, newerAdminVersion, openEditDialog,
+          restoreFocus, selectedVersion, session, siteName, siteQuery,
+          viewingAdminVersion, title
+        };
+      }
+
+      createApp({ template: "#app-template", setup })
+        .use(GraffitiPlugin, { graffiti: new window.Graffiti() })
+        .mount("#app");
+    </script>
+  </head>
+  <body>
+    <div id="app"><main><p>Loading site…</p></main></div>
+    <template id="app-template">
+      <header>
+        <h1><a href="?/">{{ title }}</a></h1>
+        <div class="header-actions">
+          <button ref="editButton" class="primary-action" type="button"
+            :disabled="isFirstPoll || (selectedVersion && displayed?.versionUrl !== selectedVersion.url)"
+            @click="openEditDialog">Edit this site</button>
+          <details v-if="session" ref="accountMenu" class="account-menu">
+            <summary>
+              <graffiti-actor-to-handle :actor="session.actor" v-slot="{ handle }">
+                <span :title="handle || 'Signed in'">
+                  {{ handle === undefined ? 'Loading account…' : handle || 'Account' }}
+                </span>
+              </graffiti-actor-to-handle>
+            </summary>
+            <div class="account-menu-panel">
+              <button type="button" :disabled="accountBusy" @click="changeAccount">
+                {{ accountBusy ? 'Logging out…' : 'Log out' }}
+              </button>
+            </div>
+          </details>
+          <button v-else type="button" :disabled="accountBusy || session === undefined"
+            @click="changeAccount">
+            {{ session === undefined ? 'Checking account…' : accountBusy ? 'Logging in…' : 'Log in' }}
+          </button>
+        </div>
+        <p v-if="accountError" role="alert">{{ accountError }}</p>
+        <p v-if="newerAdminVersion || (viewingAdminVersion && adminVersion && myVersion)">
+          <template v-if="viewingAdminVersion && adminVersion && myVersion">
+            <span>Viewing an admin's version.</span>
+            <button type="button" @click="viewingAdminVersion = false">Return to my version</button>
+          </template>
+          <template v-else>
+            <span>A newer version is available.</span>
+            <button type="button" @click="viewingAdminVersion = true">View newer version</button>
+          </template>
+        </p>
+      </header>
+
+      <main>
+        <p v-if="session === undefined || isFirstPoll" role="status">
+          {{ discoveryError ? "Could not check site versions. Retrying…" : "Loading site…" }}
+        </p>
+        <p v-else-if="!selectedVersion">No version from an admin is available yet.</p>
+        <p v-else-if="mediaError" role="alert">Could not load this version: {{ mediaError }}</p>
+        <p v-else-if="!displayed || displayed.versionUrl !== selectedVersion.url" role="status">Loading site…</p>
+        <sw-transclude v-else :id="displayed.id" :name="siteName"
+          :srcdoc="displayed.html" :query="siteQuery" route="" autosize="height">
+        </sw-transclude>
+      </main>
+
+      <dialog ref="editDialog" aria-labelledby="edit-title" @close="restoreFocus"
+        @click="closeEditDialogOnBackdrop">
+        <h2 id="edit-title">Edit this site</h2>
+        <p>You can change this site's styling, add a feature, or fix a bug; no programming experience required!</p>
+        <template v-if="!isAdmin">
+            <p>
+                Only you will see the changes you make until they are approved by one of the admins.
+            </p>
+        </template>
+        <p v-else>You're an admin so your edits will appear here for everyone.</p>
+        <footer class="dialog-actions">
+          <form method="dialog"><button type="submit">Cancel</button></form>
+          <a class="primary-action" :href="editUrl">Continue to editor</a>
+        </footer>
+      </dialog>
+    </template>
+  </body>
+</html>
