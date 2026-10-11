@@ -24,13 +24,7 @@
       .account-menu-panel button { width: 100%; margin: 0; white-space: nowrap; }
       #app > header > p { grid-column: 1 / -1; margin: 0; }
       #app > main { flex: 1 0 auto; display: flex; flex-direction: column; }
-      #app > main.viewport-route {
-        position: fixed;
-        inset-inline: 0;
-        top: var(--visible-viewport-top, 0px);
-        height: var(--visible-viewport-height, 100dvh);
-        min-height: 0;
-      }
+      #app > main.viewport-route { flex: 1 1 0; min-height: 0; }
       .site-status { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; }
       .site-status h2, .site-status p { margin: 0; }
       .dots::after {
@@ -200,30 +194,11 @@
         window.addEventListener("querychange", onQueryChange);
         onScopeDispose(() => window.removeEventListener("querychange", onQueryChange));
 
-        // The root room list grows with its contents. A chat needs a fixed
-        // viewport, otherwise 100dvh inside the iframe inherits the list's
-        // previous autosized height and cannot shrink on navigation.
-        const viewportRoute = computed(() =>
-          !!window.route.parseQuery(siteQuery.value || "").address
-        );
-
-        // The keyboard can shrink the visible viewport without changing 100dvh.
-        // Keep chat routes above it; the transcluded chat fills this region.
-        const visualViewport = window.visualViewport;
-        function syncVisibleViewport() {
-          document.documentElement.style.setProperty("--visible-viewport-height",
-            `${visualViewport?.height ?? window.innerHeight}px`);
-          document.documentElement.style.setProperty("--visible-viewport-top",
-            `${visualViewport?.offsetTop ?? 0}px`);
-        }
-        syncVisibleViewport();
-        visualViewport?.addEventListener("resize", syncVisibleViewport);
-        visualViewport?.addEventListener("scroll", syncVisibleViewport);
-        window.addEventListener("resize", syncVisibleViewport);
-        onScopeDispose(() => {
-          visualViewport?.removeEventListener("resize", syncVisibleViewport);
-          visualViewport?.removeEventListener("scroll", syncVisibleViewport);
-          window.removeEventListener("resize", syncVisibleViewport);
+        // Home sections grow with their contents. Chats need a fixed viewport;
+        // otherwise 100dvh inside the iframe can inherit the previous height.
+        const viewportRoute = computed(() => {
+          const address = window.route.parseQuery(siteQuery.value || "").address;
+          return !!address && address !== "people";
         });
 
         const siteAddress = computed(() =>

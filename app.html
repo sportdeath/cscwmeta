@@ -9,34 +9,96 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css" />
     <style>
       body { max-width: none; margin: 0; padding: 0; }
-      #app { box-sizing: border-box; height: 100dvh; min-height: 25rem; display: flex; flex-direction: column; }
+      #app { box-sizing: border-box; min-height: 100dvh; display: flex; flex-direction: column; }
       #app > main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-      .room-browser { box-sizing: border-box; width: 100%; max-width: 50rem; flex: 1; min-height: 0; margin: auto; padding: 1rem; overflow-y: auto; }
+      .home-tabs { box-sizing: border-box; display: flex; gap: .25rem; width: 100%; max-width: 50rem; margin: 0 auto; padding: .75rem 1rem 0; border-bottom: 1px solid var(--border); }
+      .home-tabs a { padding: .4rem .75rem; color: inherit; text-decoration: none; border-bottom: 2px solid transparent; }
+      .home-tabs a[aria-current="page"] { border-color: var(--links); color: var(--links); font-weight: bold; }
+      .room-browser { box-sizing: border-box; width: 100%; max-width: 50rem; flex: 1 0 auto; margin: auto; padding: 1rem; }
       .room-browser h1 { margin: 0 0 .5rem; font-size: 1.5rem; }
       .room-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: .5rem; list-style: none; margin: 0; padding: 0; }
       .room-list li { min-width: 0; }
       .room-list a, .inactive-rooms a { box-sizing: border-box; display: block; height: 100%; padding: .7rem 1rem; border-radius: .35rem; color: inherit; text-decoration: none; }
       .room-list a { border: 2px solid color-mix(in srgb, currentColor 35%, var(--border)); background: var(--background-alt); }
       .inactive-rooms a { border: 1px solid var(--border); background: var(--background-body); }
-      .room-list a:hover { background: var(--button-hover); }
-      .inactive-rooms a:hover { background: var(--background-alt); }
       .room-browser a small { display: block; margin-top: .2rem; }
       .room-location { color: var(--links); }
       .room-location svg { width: 1em; height: 1em; margin-right: .2em; vertical-align: -.15em; }
       .inactive-rooms { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: .5rem; list-style: none; margin: .5rem -10px 0; padding: 0 0 .5rem; }
       .room-browser details { display: block; margin: .4rem 0 0; }
       .room-browser summary { border: 1px solid var(--border); border-radius: .35rem; }
-      /* Temporary preview clock styling; remove with the preview controls. */
-      .preview-clock input { margin: .3rem .5rem .3rem 0; }
-      .chat { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      .people-directory { box-sizing: border-box; width: 100%; max-width: 50rem; margin: 0 auto; padding: 1rem; }
+      .people-directory > header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+      .people-directory > header.profile-page-header { justify-content: flex-start; }
+      .people-directory h1 { margin: 0; font-size: 1.5rem; }
+      .people-search { position: relative; margin-top: 1rem; }
+      .people-search svg { position: absolute; top: 50%; left: .75rem; width: 1.1rem; height: 1.1rem; transform: translateY(-50%); pointer-events: none; }
+      .people-search input { box-sizing: border-box; width: 100%; margin: 0; padding-left: 2.25rem; }
+      .people-filters { display: flex; flex-wrap: wrap; gap: .35rem 1rem; margin: .5rem 0 0; padding: 0; border: 0; }
+      .people-filters label { display: inline-flex; align-items: center; gap: .3rem; margin: 0; padding: .25rem .55rem; border: 1px solid; border-radius: 1rem; cursor: pointer; }
+      .people-filters input { margin: 0; accent-color: var(--accent); }
+      .people-filters label:has(input:checked) { background: color-mix(in srgb, var(--accent) 30%, var(--background)); box-shadow: inset 0 0 0 1px var(--accent); }
+      .people-filters .meeting, .profile-badges .meeting { --accent: #16a085; }
+      .people-filters .presenter, .profile-badges .presenter { --accent: #9b59b6; }
+      .people-filters label, .profile-badges span { color: color-mix(in srgb, var(--accent) 72%, var(--text-main)); background: color-mix(in srgb, var(--accent) 18%, var(--background)); border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+      .introduce-button { box-sizing: border-box; display: block; width: 100%; margin: 1rem 0; padding: 1rem; border: 1px solid var(--links); border-radius: .4rem; background: var(--links); color: white; font-size: 1.1rem; text-align: center; text-decoration: none; }
+      .profile-form { margin: 1rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: .4rem; }
+      .profile-form label { display: block; margin: .75rem 0; }
+      .profile-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), .profile-form textarea { box-sizing: border-box; width: 100%; }
+      .profile-form input[type="checkbox"], .profile-form input[type="radio"] { width: auto; }
+      .profile-form textarea { resize: vertical; }
+      .profile-form fieldset { margin: .75rem 0; }
+      .profile-form fieldset label { margin: 0; }
+      .profile-form ul { margin: .5rem 0; padding-left: 1.25rem; }
+      .profile-form li { margin: .25rem 0; }
+      .profile-form li button { margin: 0 .35rem 0 0; }
+      .profile-form .paper-add, .profile-form .paper-added { box-sizing: border-box; width: 4.75rem; padding: .25rem .4rem; text-align: center; white-space: nowrap; }
+      .profile-form .paper-add { border: 1px solid var(--links); background: var(--links); color: white; }
+      .profile-form .paper-added { border: 1px solid var(--border); background: var(--background-alt); color: var(--text-muted, #666); }
+      .profile-form label[for="profile-contact"] { margin-bottom: .2rem; }
+      #contact-help { display: block; margin-bottom: .5rem; }
+      .profile-form label.profile-photo-picker { display: inline-flex; align-items: center; gap: .75rem; cursor: pointer; }
+      .profile-photo-picker:focus-within .profile-photo-preview { outline: 2px solid var(--links); outline-offset: 2px; }
+      .profile-photo-input { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+      .profile-form-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+      .profile-form-actions button { margin: 0; }
+      .profile-form-actions button[type="submit"] { box-sizing: border-box; flex: 1 0 100%; width: 100%; padding: .85rem 1rem; border: 1px solid var(--links); background: var(--links); color: white; font-size: 1.1rem; }
+      .profile-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: .75rem; list-style: none; margin: 1rem 0; padding: 0; }
+      .profile-card { min-width: 0; border: 1px solid var(--border); border-radius: .4rem; background: var(--background-alt); }
+      .profile-card a { display: block; padding: 1rem; border-radius: inherit; color: inherit; text-decoration: none; }
+      .profile-card a:focus-visible { outline: 2px solid var(--links); outline-offset: 2px; }
+      .profile-card p { margin: .6rem 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-detail { margin-top: 1rem; }
+      .profile-detail > header { padding: .25rem; }
+      .profile-detail .profile-avatar { width: 4rem; height: 4rem; }
+      .profile-detail section { margin-top: .75rem; padding: .85rem 1rem; border: 1px solid var(--border); border-radius: .4rem; background: var(--background-alt); }
+      .profile-detail section h3 { margin: 0 0 .65rem; padding-bottom: .45rem; border-bottom: 1px solid var(--border); color: var(--links); font-size: 1.1rem; }
+      .profile-detail section p, .profile-detail section ul { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .profile-detail section p a { color: var(--links); text-decoration: underline; }
+      .profile-detail section ul { padding-left: 1.25rem; }
+      .profile-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: 1rem; }
+      .profile-actions button { margin: 0; }
+      .profile-actions .profile-edit { border: 1px solid var(--links); background: var(--links); color: white; }
+      .profile-identity { display: flex; align-items: center; gap: .7rem; min-width: 0; }
+      .profile-identity > div:last-child { min-width: 0; }
+      .profile-identity h2 { margin: 0; font-size: 1.1rem; }
+      .profile-identity h2 small { font-size: .8em; font-weight: normal; }
+      .profile-handle { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted, #666); }
+      .profile-badges { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .6rem; }
+      .profile-badges span { padding: .1rem .45rem; border: 1px solid; border-radius: 1rem; font-size: .8rem; }
+      .profile-avatar { display: grid; place-items: center; flex: none; width: 3rem; height: 3rem; overflow: hidden; border-radius: 50%; background: var(--background-body); font-size: 1.4rem; }
+      .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+      .profile-photo-preview { width: 5rem; height: 5rem; border: 2px dashed var(--border); }
+      .chat { flex: 0 0 100dvh; min-height: 0; display: flex; flex-direction: column; }
       .chat > header { padding: 1rem 1rem 0; }
-      .chat-heading { display: flex; align-items: center; gap: .6rem; }
-      .chat-heading h1 { margin: 0; font-size: 1.5rem; }
+      .chat-heading { display: flex; align-items: flex-start; gap: .6rem; }
+      .chat-heading-content { flex: 1; min-width: 0; }
+      .chat-heading h1 { --edge-fade: 1.25rem; margin: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: none; font-size: 1.5rem; }
       .chat-heading h1 a { color: inherit; text-decoration: none; }
-      .chat-heading h1 a:hover { text-decoration: underline; }
       .chat-back { flex: none; padding: .15rem .5rem; border: 1px solid var(--border); border-radius: .35rem; text-decoration: none; }
-      .chat-subtitles { display: flex; flex-wrap: wrap; gap: .2rem 1rem; margin: .2rem 0 .5rem; font-size: .9rem; }
-      .chat-subtitles strong { color: var(--links); }
+      .chat-context { display: flex; gap: .35rem; min-width: 0; margin: .1rem 0 .5rem; color: var(--text-muted, #666); font-size: .9rem; white-space: nowrap; }
+      .chat-context span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+      .chat-context span:last-child { flex: none; }
       .chat-log { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; border-block: 1px solid var(--border); padding: .5rem 1rem; }
       .chat-log.menu-open { overflow-y: hidden; touch-action: none; }
       .messages { display: flex; flex-direction: column; gap: .5rem; list-style: none; margin: 0; padding: 0; }
@@ -58,7 +120,7 @@
       .delivery-status.failed { color: #a43d31; }
       .message-actions-trigger { flex: none; box-sizing: border-box; width: 2rem; height: 2rem; margin: 0; padding: 0; border: 0; border-radius: .4rem; background: transparent; color: var(--text-muted, #666); font-size: 1.4rem; line-height: 1; opacity: 0; }
       .messages li.own:hover .message-actions-trigger, .messages li.own:focus-within .message-actions-trigger, .message-actions-trigger[aria-expanded="true"] { opacity: 1; }
-      .message-actions-trigger:hover, .message-actions-trigger:focus-visible { background: var(--button-hover); }
+      .message-actions-trigger:focus-visible { background: var(--button-hover); }
       .message-scrim { position: fixed; inset: 0; z-index: 9; background: transparent; touch-action: none; }
       .message-actions-menu { position: fixed; z-index: 10; box-sizing: border-box; min-width: 6rem; padding: .25rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--background); box-shadow: 0 .4rem 1rem #0003; }
       .message-actions-menu button { box-sizing: border-box; width: 100%; margin: 0; }
@@ -79,9 +141,36 @@
         .delivery-status.sending { animation: none; border-top-color: currentColor; }
         .messages li { transition: none; }
       }
+      .chat-suggestions { --edge-fade: 2rem; display: flex; align-items: center; gap: .25rem; min-width: 0; padding: .5rem 1rem 0; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; scrollbar-width: none; }
+      .chat-suggestions > span { flex: none; color: var(--text-muted, #666); font-size: .8rem; }
+      .chat-suggestions::-webkit-scrollbar, .chat-title::-webkit-scrollbar { display: none; }
+      .chat-suggestions.more-left, .chat-title.more-left { mask-image: linear-gradient(to right, transparent, black var(--edge-fade)); }
+      .chat-suggestions.more-right, .chat-title.more-right { mask-image: linear-gradient(to right, black calc(100% - var(--edge-fade)), transparent); }
+      .chat-suggestions.more-left.more-right, .chat-title.more-left.more-right { mask-image: linear-gradient(to right, transparent, black var(--edge-fade), black calc(100% - var(--edge-fade)), transparent); }
+      .chat-suggestions button { flex: none; margin: 0; padding: .2rem .55rem; border: 1px solid var(--border); border-radius: 1rem; background: transparent; color: var(--text-muted, #666); font-size: .8rem; }
+      .chat-suggestions button:focus-visible { background: var(--background-alt); }
+      @media (hover: hover) and (pointer: fine) {
+        .room-list a:hover { background: var(--button-hover); }
+        .inactive-rooms a:hover, .chat-suggestions button:hover { background: var(--background-alt); }
+        .profile-card a:hover { background: var(--button-hover); }
+        .chat-heading h1 a:hover { text-decoration: underline; }
+        .message-actions-trigger:hover { background: var(--button-hover); }
+      }
       .chat form { display: flex; align-items: flex-end; gap: .5rem; margin: 0; padding: .75rem 1rem 1rem; }
+      .chat-suggestions + form { padding-top: .5rem; }
+      .chat form.login-form { padding: .5rem; }
+      .chat form.login-form button { flex: 1; }
       .chat form textarea { box-sizing: border-box; flex: 1; min-width: 0; min-height: 2.5rem; max-height: 9rem; margin: 0; resize: none; overflow-y: auto; }
       .chat form button { margin: 0; }
+      @media (max-width: 40rem) {
+        .chat > header { padding: .5rem .65rem 0; }
+        .chat-heading { gap: .4rem; }
+        .chat-context { margin-bottom: .3rem; }
+        .chat-log { padding: .35rem .65rem; }
+        .chat-suggestions { --edge-fade: 1.5rem; padding: .3rem .65rem 0; }
+        .chat form { padding: .45rem .65rem .6rem; }
+        .chat-suggestions + form { padding-top: .35rem; }
+      }
     </style>
     <script type="module">
       import { computed, createApp, nextTick, onMounted, onScopeDispose, reactive, ref, watch } from "vue";
@@ -95,7 +184,15 @@
       // This instance uses a conference-specific channel. Other chats can
       // render the same component with a different channel and title.
       const hallwayChannel = "cscw-meta:2026:hallway:v1";
+      // Profiles are discoverable through this conference directory.
+      const profilesChannel = "cscw-meta:2026:people:v1";
       const programListUrl = "https://files.sigchi.org/conference/cache/program-list";
+      const roomSuggestions = [
+        { label: "Meet after", draft: "Anyone want to meet after this session to discuss " },
+        { label: "Praise", draft: "I loved the point about " },
+        { label: "Clarify", draft: "Could someone clarify what was said about " },
+        { label: "Citation", draft: "Could someone point me to a paper or reference on " },
+      ];
       const messageSchema = {
         properties: {
           value: {
@@ -108,6 +205,32 @@
           },
         },
       };
+      const profileSchema = {
+        properties: {
+          value: {
+            type: "object",
+            required: ["name", "research interests", "open to meeting", "time"],
+            properties: {
+              name: { type: "string", minLength: 1 },
+              "research interests": { type: "string", minLength: 1 },
+              pronouns: { type: "string" },
+              "profile picture": { type: "string" },
+              "presentation IDs": {
+                type: "array",
+                items: { type: "number" },
+              },
+              "open to meeting": { type: "boolean" },
+              "how to reach me": { type: "string" },
+              time: { type: "number" },
+            },
+          },
+        },
+      };
+      // Stable actor addresses let people share profiles directly.
+      function profileHref(actor) {
+        return `?/people/profile/${encodeURIComponent(actor)}`;
+      }
+      const editorHref = "?/people/edit";
       const timeFormatter = new Intl.DateTimeFormat(undefined, {
         hour: "numeric", minute: "2-digit",
       });
@@ -118,9 +241,10 @@
           title: { type: String, required: true },
           href: { type: String, default: "" },
           backHref: { type: String, default: "" },
-          subtitles: { type: Array, default: () => [] },
+          context: { type: Object, default: null },
           markers: { type: Array, default: () => [] },
           markerTimeZone: { type: String, default: "" },
+          suggestions: { type: Array, default: () => [] },
           // Only the active room should run the expensive live poll.
           autopoll: { type: Boolean, default: false },
         },
@@ -131,6 +255,9 @@
             () => [props.channel], messageSchema, undefined, () => props.autopoll,
           );
           const draft = ref("");
+          const untouchedSuggestion = ref("");
+          const canSend = computed(() => !!draft.value.trim() &&
+            draft.value.trim() !== untouchedSuggestion.value.trim());
           const pending = ref([]);
           const accountBusy = ref(false);
           const accountError = ref("");
@@ -145,6 +272,41 @@
           let lastMessageTime = 0;
           let pressTimer;
           let pressStart;
+
+          // The fades appear only when more content is available in that direction.
+          function trackHorizontalScroll() {
+            const element = ref(null);
+            const moreLeft = ref(false);
+            const moreRight = ref(false);
+            function update() {
+              const row = element.value;
+              if (!row) return;
+              moreLeft.value = row.scrollLeft > 1;
+              moreRight.value = row.scrollLeft + row.clientWidth < row.scrollWidth - 1;
+            }
+            const observer = new ResizeObserver(update);
+            watch(element, (row, previous) => {
+              if (previous) observer.unobserve(previous);
+              if (row) {
+                observer.observe(row);
+                nextTick(update);
+              }
+            });
+            onScopeDispose(() => observer.disconnect());
+            return { element, moreLeft, moreRight, update };
+          }
+          const { element: suggestionList, moreLeft: suggestionsMoreLeft,
+            moreRight: suggestionsMoreRight, update: updateSuggestionEdges } =
+            trackHorizontalScroll();
+          const { element: sessionTitle, moreLeft: sessionMoreLeft,
+            moreRight: sessionMoreRight, update: updateSessionEdges } =
+            trackHorizontalScroll();
+          watch(() => props.suggestions, () => nextTick(updateSuggestionEdges), { flush: "post" });
+          watch(() => props.title, async () => {
+            await nextTick();
+            if (sessionTitle.value) sessionTitle.value.scrollLeft = 0;
+            updateSessionEdges();
+          }, { flush: "post" });
 
           // Keep an optimistic copy until discovery contains the saved object.
           // Consecutive local sends get distinct timestamps for matching.
@@ -180,6 +342,9 @@
             const log = messageList.value;
             if (log) log.scrollTop = log.scrollHeight;
           });
+          watch(messageInput, (input) => {
+            input?.focus({ preventScroll: true });
+          }, { flush: "post" });
           watch(() => timelineItems.value.length, async () => {
             const log = messageList.value;
             if (!log) return;
@@ -219,7 +384,7 @@
 
           function sendMessage() {
             const content = draft.value.trim();
-            if (!session.value || !content || content.length > 1000) return;
+            if (!session.value || !canSend.value || content.length > 1000) return;
             closeActions();
             lastMessageTime = Math.max(Date.now(), lastMessageTime + 1);
             const message = reactive({
@@ -232,11 +397,23 @@
             });
             pending.value.push(message);
             draft.value = "";
+            untouchedSuggestion.value = "";
             nextTick(() => {
               resizeComposer();
               messageInput.value?.focus();
             });
             postMessage(message);
+          }
+
+          function useSuggestion(suggestion) {
+            if (draft.value.trim()) return;
+            draft.value = suggestion.draft;
+            untouchedSuggestion.value = suggestion.draft;
+            nextTick(() => {
+              resizeComposer();
+              messageInput.value?.focus();
+              messageInput.value?.setSelectionRange(draft.value.length, draft.value.length);
+            });
           }
 
           function resizeComposer() {
@@ -413,9 +590,11 @@
           }
 
           return {
-            session, isFirstPoll, discoveryError, draft, accountBusy,
+            session, isFirstPoll, discoveryError, draft, canSend, accountBusy,
             accountError, messageList, messageInput, messageItems, timelineItems, logIn,
-            sendMessage, resizeComposer, onComposerKeydown, postMessage,
+            suggestionList, suggestionsMoreLeft, suggestionsMoreRight, updateSuggestionEdges,
+            sessionTitle, sessionMoreLeft, sessionMoreRight, updateSessionEdges,
+            sendMessage, useSuggestion, resizeComposer, onComposerKeydown, postMessage,
             startLongPress, moveLongPress, clearLongPress, onMessageSelectStart,
             onMessageContextMenu,
             openActionsFromButton, deleteFromMenu, closeActions, actionMenu,
@@ -425,14 +604,309 @@
         },
       };
 
+      const PeopleDirectory = {
+        template: "#people-directory-template",
+        props: {
+          program: { type: Object, default: null },
+          programLoading: { type: Boolean, default: false },
+          programError: { type: String, default: "" },
+          editorRoute: { type: Boolean, default: false },
+          profileRoute: { type: Boolean, default: false },
+          profileActor: { type: String, default: "" },
+        },
+        emits: ["saved", "removed"],
+        setup(props, { emit }) {
+          const graffiti = useGraffiti();
+          const session = useGraffitiSession();
+          const { objects, isFirstPoll, error: discoveryError } = useGraffitiDiscover(
+            [profilesChannel], profileSchema, undefined, true,
+          );
+          const profiles = computed(() => {
+            const latest = new Map();
+            for (const profile of objects.value) {
+              const previous = latest.get(profile.actor);
+              if (!previous || profile.value.time > previous.value.time ||
+                (profile.value.time === previous.value.time && profile.url > previous.url)) {
+                latest.set(profile.actor, profile);
+              }
+            }
+            const ownActor = session.value?.actor;
+            return [...latest.values()].sort((a, b) =>
+              Number(b.actor === ownActor) - Number(a.actor === ownActor) ||
+              a.value.name.localeCompare(b.value.name));
+          });
+          const myProfile = computed(() => profiles.value.find((profile) =>
+            profile.actor === session.value?.actor));
+          const selectedProfile = computed(() => profiles.value.find((profile) =>
+            profile.actor === props.profileActor));
+          const search = ref("");
+          const presentersOnly = ref(false);
+          const meetingOnly = ref(false);
+          const visibleProfiles = computed(() => {
+            const query = search.value.trim().toLowerCase();
+            return profiles.value.filter((profile) => {
+              if (presentersOnly.value && !profile.value["presentation IDs"]?.length) return false;
+              if (meetingOnly.value && !profile.value["open to meeting"]) return false;
+              return !query || [
+                profile.value.name,
+                profile.value.pronouns,
+                profile.value["research interests"],
+                ...(profile.value["presentation IDs"] || []).map(presentationTitle),
+              ].filter(Boolean).join(" ").toLowerCase().includes(query);
+            });
+          });
+
+          const editing = ref(false);
+          const name = ref("");
+          const pronouns = ref("");
+          const interests = ref("");
+          const openToMeeting = ref(null);
+          const contact = ref("");
+          const presentations = ref([]);
+          const presentationSearch = ref("");
+          const photoFile = ref(null);
+          const photoPreview = ref("");
+          const photoInput = ref(null);
+          const removePhoto = ref(false);
+          const busy = ref(false);
+          const error = ref("");
+          const notice = ref("");
+          const maxPhotoBytes = 8 * 1024 * 1024;
+
+          const programPeople = computed(() => new Map((props.program?.people || [])
+            .map((person) => [person.id, person])));
+          const programContents = computed(() => new Map((props.program?.contents || [])
+            .map((content) => [content.id, content])));
+          function presentationTitle(id) {
+            return programContents.value.get(id)?.title || `Presentation ${id}`;
+          }
+          function authorNames(content) {
+            return (content.authors || []).map((author) => programPeople.value.get(author.personId))
+              .filter(Boolean).map((person) =>
+                [person.firstName, person.middleInitial, person.lastName].filter(Boolean).join(" "))
+              .join(", ");
+          }
+          function presentationAuthors(id) {
+            const content = programContents.value.get(id);
+            return content ? authorNames(content) : "";
+          }
+          // Keep research links clickable without rendering profile text as HTML.
+          function researchParts(text) {
+            return text.split(/(https?:\/\/[^\s<>"']+)/g);
+          }
+          function isResearchLink(part) {
+            return /^https?:\/\//.test(part);
+          }
+          const matchingPresentations = computed(() => {
+            const query = presentationSearch.value.trim().toLowerCase();
+            if (query.length < 2 || !props.program?.contents) return [];
+            return props.program.contents.filter((item) =>
+              Number.isFinite(item.id) && typeof item.title === "string" &&
+              `${item.title} ${authorNames(item)}`.toLowerCase().includes(query)
+            );
+          });
+          const presentationMatches = computed(() => {
+            const selected = new Set(presentations.value);
+            return matchingPresentations.value.filter((item) =>
+              !selected.has(item.id)
+            ).slice(0, 8).map((item) => ({ id: item.id, title: item.title,
+              authors: authorNames(item) }));
+          });
+          function addPresentation(item) {
+            presentations.value = [...presentations.value, item.id];
+          }
+          function removePresentation(id) {
+            presentations.value = presentations.value.filter((item) => item !== id);
+          }
+
+          function clearPhotoPreview() {
+            if (photoPreview.value) URL.revokeObjectURL(photoPreview.value);
+            photoPreview.value = "";
+            photoFile.value = null;
+            if (photoInput.value) photoInput.value.value = "";
+          }
+          onScopeDispose(clearPhotoPreview);
+          function selectPhoto(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            if (!file.type.startsWith("image/") || file.size > maxPhotoBytes) {
+              error.value = "Choose an image under 8 MB.";
+              event.target.value = "";
+              return;
+            }
+            clearPhotoPreview();
+            photoFile.value = file;
+            photoPreview.value = URL.createObjectURL(file);
+            removePhoto.value = false;
+            error.value = "";
+          }
+          function startEdit() {
+            const value = myProfile.value?.value;
+            name.value = value?.name || "";
+            pronouns.value = value?.pronouns || "";
+            interests.value = value?.["research interests"] || "";
+            openToMeeting.value = value?.["open to meeting"] ?? null;
+            contact.value = value?.["how to reach me"] || "";
+            presentations.value = [...(value?.["presentation IDs"] || [])];
+            presentationSearch.value = "";
+            removePhoto.value = false;
+            clearPhotoPreview();
+            error.value = "";
+            notice.value = "";
+            editing.value = true;
+          }
+          function cancelEdit() {
+            editing.value = false;
+            clearPhotoPreview();
+            error.value = "";
+          }
+          function clearPhoto() {
+            clearPhotoPreview();
+            removePhoto.value = true;
+          }
+          async function logIn() {
+            error.value = "";
+            try { await graffiti.login(); }
+            catch (cause) { error.value = cause.message || "Could not log in."; }
+          }
+          function openEditor() { window.navigate(editorHref); }
+          const ownVersions = () => objects.value.filter((profile) =>
+            profile.actor === session.value?.actor);
+          async function retireVersions(versions, currentPicture) {
+            const deleted = await Promise.allSettled(versions.map((profile) =>
+              graffiti.delete(profile, session.value)));
+            if (deleted.some((result) => result.status === "rejected")) return false;
+            const oldPictures = new Set(versions.map((profile) =>
+              profile.value["profile picture"]).filter((url) => url && url !== currentPicture));
+            const removedPictures = await Promise.allSettled([...oldPictures].map((url) =>
+              graffiti.deleteMedia(url, session.value)));
+            return removedPictures.every((result) => result.status === "fulfilled");
+          }
+          async function saveProfile() {
+            if (!session.value || busy.value) return;
+            const cleanName = name.value.trim();
+            const cleanPronouns = pronouns.value.trim();
+            const cleanInterests = interests.value.trim();
+            const cleanContact = contact.value.trim();
+            if (!cleanName || !cleanInterests || typeof openToMeeting.value !== "boolean" ||
+              (openToMeeting.value && !cleanContact)) {
+              error.value = "Complete your name, research interests, meeting choice, and contact details if you want to meet.";
+              return;
+            }
+            busy.value = true;
+            error.value = "";
+            notice.value = "";
+            const previous = ownVersions();
+            let uploadedPicture = "";
+            try {
+              const picture = photoFile.value
+                ? (uploadedPicture = await graffiti.postMedia({ data: photoFile.value }, session.value))
+                : removePhoto.value ? "" : myProfile.value?.value["profile picture"] || "";
+              const value = {
+                name: cleanName,
+                "research interests": cleanInterests,
+                "open to meeting": openToMeeting.value,
+                time: Math.max(Date.now(), ...previous.map((item) => item.value.time + 1)),
+              };
+              if (cleanPronouns) value.pronouns = cleanPronouns;
+              if (presentations.value.length) value["presentation IDs"] = [...presentations.value];
+              if (picture) value["profile picture"] = picture;
+              if (openToMeeting.value) value["how to reach me"] = cleanContact;
+              await graffiti.post({ value, channels: [profilesChannel] }, session.value);
+              uploadedPicture = "";
+              const retired = await retireVersions(previous, picture);
+              cancelEdit();
+              notice.value = retired ? "Profile saved." :
+                "Profile saved, but an older version or picture could not be removed.";
+              emit("saved", session.value.actor);
+            } catch (cause) {
+              if (uploadedPicture) {
+                try { await graffiti.deleteMedia(uploadedPicture, session.value); } catch {}
+              }
+              error.value = cause.message || "Could not save your profile.";
+            } finally {
+              busy.value = false;
+            }
+          }
+          async function removeProfile() {
+            if (!session.value || busy.value ||
+              !window.confirm("Remove your profile from the directory?")) return;
+            busy.value = true;
+            error.value = "";
+            notice.value = "";
+            try {
+              const removed = await retireVersions(ownVersions(), "");
+              if (removed) {
+                notice.value = "Profile removed.";
+                emit("removed");
+              }
+              else error.value = "Some profile data could not be removed. Please try again.";
+            } finally {
+              busy.value = false;
+            }
+          }
+
+          // Keep the editor mounted across directory ↔ editor navigation so its
+          // draft survives a cancelled back navigation. Direct links wait for
+          // profile discovery before filling the form.
+          watch([() => props.editorRoute, isFirstPoll, session],
+            ([onEditor, loading, currentSession]) => {
+              if (!onEditor) cancelEdit();
+              else if (!loading && currentSession && !editing.value) startEdit();
+            }, { immediate: true });
+
+          return {
+            session, isFirstPoll, discoveryError, profiles, myProfile, selectedProfile,
+            search, presentersOnly, meetingOnly, visibleProfiles, profileHref, editorHref,
+            editing, name, pronouns, interests, openToMeeting,
+            contact, presentations, presentationSearch, matchingPresentations,
+            presentationMatches,
+            photoFile, photoPreview, photoInput, removePhoto, busy, error, notice,
+            maxPhotoBytes, presentationTitle, presentationAuthors,
+            researchParts, isResearchLink,
+            addPresentation, removePresentation, selectPhoto, openEditor,
+            startEdit, cancelEdit, clearPhoto, logIn, saveProfile, removeProfile,
+          };
+        },
+      };
+
       function setup() {
         const program = ref(null);
         const programLoading = ref(true);
         const programError = ref("");
-        const routeAddress = ref(window.address || "");
-        function syncRoute() { routeAddress.value = window.address || ""; }
-        window.addEventListener("addresschange", syncRoute);
-        onScopeDispose(() => window.removeEventListener("addresschange", syncRoute));
+        const routeQuery = ref(window.query || "");
+        const routeState = computed(() => window.route.parseQuery(routeQuery.value));
+        const routeAddress = computed(() => routeState.value.address || "");
+        const editorRoute = computed(() => routeAddress.value === "people/edit");
+        const profileRoute = computed(() => routeAddress.value.startsWith("people/profile/"));
+        const profileActor = computed(() => {
+          if (!profileRoute.value) return "";
+          try { return decodeURIComponent(routeAddress.value.slice("people/profile/".length)); }
+          catch { return ""; }
+        });
+        let savedProfile = false;
+        function syncRoute() {
+          const nextQuery = window.query || "";
+          const nextEditor = window.route.parseQuery(nextQuery).address === "people/edit";
+          if (editorRoute.value && !nextEditor &&
+            !savedProfile && !window.confirm("Leave without saving your profile?")) {
+            window.navigate(editorHref);
+            return;
+          }
+          savedProfile = false;
+          routeQuery.value = nextQuery;
+        }
+        function profileSaved(actor) {
+          savedProfile = true;
+          window.navigate(profileHref(actor));
+        }
+        function profileRemoved() {
+          window.navigate("?/people");
+        }
+        window.addEventListener("querychange", syncRoute);
+        onScopeDispose(() => window.removeEventListener("querychange", syncRoute));
+        const homeTab = computed(() => routeAddress.value === "people" || editorRoute.value || profileRoute.value
+          ? "people" : "chat");
 
         async function loadProgram() {
           programLoading.value = true;
@@ -488,18 +962,8 @@
         const conferenceTimeZone = computed(() =>
           program.value?.conference?.timeZoneName || "America/Denver");
 
-        // Temporary preview clock: remove this block and use actualNow in
-        // roomViews when testing is done. Chat messages always use real time.
-        const previewTime = ref("");
-        const viewedNow = computed(() => {
-          const preview = previewTime.value ? Date.parse(previewTime.value) : NaN;
-          return Number.isFinite(preview) ? preview : actualNow.value;
-        });
-        function resetPreviewTime() { previewTime.value = ""; }
-        // End temporary preview clock.
-
         function timeUntil(timestamp) {
-          const minutes = Math.max(1, Math.ceil((timestamp - viewedNow.value) / 60000));
+          const minutes = Math.max(1, Math.ceil((timestamp - actualNow.value) / 60000));
           if (minutes < 60) return `${minutes} ${minutes === 1 ? "min" : "mins"}`;
           const hours = Math.floor(minutes / 60);
           const remainingMinutes = minutes % 60;
@@ -525,11 +989,11 @@
             if (!sessions?.length) return [];
             sessions.sort((a, b) => a.startDate - b.startDate);
             const current = sessions.find((session) =>
-              session.startDate <= viewedNow.value && viewedNow.value < session.endDate
+              session.startDate <= actualNow.value && actualNow.value < session.endDate
             );
-            const last = sessions.filter((session) => session.endDate <= viewedNow.value)
+            const last = sessions.filter((session) => session.endDate <= actualNow.value)
               .sort((a, b) => a.endDate - b.endDate).at(-1);
-            const next = sessions.find((session) => session.startDate > viewedNow.value);
+            const next = sessions.find((session) => session.startDate > actualNow.value);
             return [{ ...room, sessions, current, last, next }];
           });
         });
@@ -549,15 +1013,19 @@
           room.id === routeRoomId.value
         ));
         const selectedTitle = computed(() => routeAddress.value === "hallway"
-          ? "The Hallway Track" : selectedRoom.value?.name || "");
+          ? "The Hallway Track"
+          : selectedRoom.value?.current?.name || selectedRoom.value?.name || "");
         const selectedHref = computed(() => routeAddress.value === "hallway"
           ? "?/hallway" : selectedRoom.value ? `?/room/${selectedRoom.value.id}` : "");
-        const selectedSubtitles = computed(() => selectedRoom.value ? [
-          selectedRoom.value.current
-            ? { label: `Happening now · ${timeUntil(selectedRoom.value.current.endDate)} left`,
-                text: selectedRoom.value.current.name }
-            : { label: "No session in progress", text: "" },
-        ] : []);
+        const selectedContext = computed(() => {
+          const room = selectedRoom.value;
+          if (!room) return null;
+          return room.current
+            ? { room: room.name, time: `${timeUntil(room.current.endDate)} left` }
+            : { room: "No session in progress" };
+        });
+        const selectedSuggestions = computed(() =>
+          selectedRoom.value?.current ? roomSuggestions : []);
         const selectedMarkers = computed(() => {
           const room = selectedRoom.value;
           const data = program.value;
@@ -567,7 +1035,7 @@
             [item.id, item.duration]));
           const markers = [];
           for (const session of room.sessions) {
-            if (session.startDate > viewedNow.value) break;
+            if (session.startDate > actualNow.value) break;
             const contents = (session.contentIds || [])
               .map((id) => contentById.get(id)).filter(Boolean);
             const durations = contents.map((item) =>
@@ -587,7 +1055,7 @@
             let talkStart = session.startDate;
             for (let index = 1; index < contents.length; index++) {
               talkStart += durations[index - 1] * 60000;
-              if (talkStart > viewedNow.value) break;
+              if (talkStart > actualNow.value) break;
               markers.push({
                 kind: "marker", key: `talk:${session.id}:${contents[index].id}`,
                 time: talkStart, label: "Talk begins", title: contents[index].title,
@@ -603,15 +1071,18 @@
         onMounted(() => { syncRoute(); loadProgram(); });
         return {
           program, programLoading, programError, loadProgram,
-          routeAddress, routeRoomId, activeRooms, inactiveRooms,
-          selectedTitle, selectedHref, selectedSubtitles, selectedMarkers, selectedChannel,
-          conferenceTimeZone, previewTime, resetPreviewTime, timeUntil,
+          routeAddress, editorRoute, profileRoute, profileActor, homeTab,
+          profileSaved, profileRemoved,
+          routeRoomId, activeRooms, inactiveRooms,
+          selectedTitle, selectedHref, selectedContext, selectedSuggestions,
+          selectedMarkers, selectedChannel,
+          conferenceTimeZone, timeUntil,
         };
       }
 
       createApp({
         template: "#app-template",
-        components: { ChatRoom },
+        components: { ChatRoom, PeopleDirectory },
         setup,
       })
         .use(GraffitiPlugin, { graffiti: new window.Graffiti() })
@@ -623,7 +1094,12 @@
 
     <template id="app-template">
       <main>
-        <nav v-if="!routeAddress" class="room-browser" aria-label="Chat rooms">
+        <template v-if="!routeAddress || routeAddress === 'people' || editorRoute || profileRoute">
+          <nav v-if="!editorRoute && !profileRoute" class="home-tabs" aria-label="Home sections">
+            <a href="?/" :aria-current="homeTab === 'chat' ? 'page' : null">Chat</a>
+            <a href="?/people" :aria-current="homeTab === 'people' ? 'page' : null">People</a>
+          </nav>
+        <nav v-if="homeTab === 'chat'" class="room-browser" aria-label="Chat rooms">
           <h1>Happening now</h1>
           <ul class="room-list">
             <li><a href="?/hallway"><strong>The Hallway Track</strong></a></li>
@@ -663,21 +1139,19 @@
               </ul>
             </details>
           </template>
-          <!-- Temporary preview clock: remove this details block after testing. -->
-          <details class="preview-clock">
-            <summary>{{ previewTime ? `Previewing ${previewTime.replace('T', ' ')}` : 'Preview time' }}</summary>
-            <label>Device time <input type="datetime-local" v-model="previewTime"></label>
-            <button v-if="previewTime" type="button" @click="resetPreviewTime">
-              Use current time
-            </button>
-          </details>
         </nav>
+        <people-directory v-else :program="program" :program-loading="programLoading"
+          :program-error="programError" :editor-route="editorRoute"
+          :profile-route="profileRoute" :profile-actor="profileActor"
+          @saved="profileSaved" @removed="profileRemoved"></people-directory>
+        </template>
         <template v-else>
           <!-- Key by channel so local chat state cannot leak between rooms. -->
           <chat-room v-if="selectedChannel" :key="selectedChannel"
             :channel="selectedChannel" :title="selectedTitle"
             :href="selectedHref" back-href="?/"
-            :subtitles="selectedSubtitles" :markers="selectedMarkers"
+            :context="selectedContext" :markers="selectedMarkers"
+            :suggestions="selectedSuggestions"
             :marker-time-zone="conferenceTimeZone"
             :autopoll="true"></chat-room>
           <template v-else>
@@ -692,19 +1166,240 @@
       </main>
     </template>
 
+    <template id="people-directory-template">
+      <section class="people-directory"
+        :aria-label="editorRoute ? 'Profile editor' : profileRoute ? 'Profile' : 'People directory'">
+        <header v-if="editorRoute" class="profile-page-header">
+          <a class="chat-back" :href="myProfile ? profileHref(myProfile.actor) : '?/people'"
+            :aria-label="myProfile ? 'Back to profile' : 'Back to people'" title="Back">←</a>
+          <h1>{{ myProfile ? 'Edit your profile' : 'Introduce yourself' }}</h1>
+        </header>
+        <header v-else-if="profileRoute" class="profile-page-header">
+          <a class="chat-back" href="?/people" aria-label="Back to people"
+            title="Back to people">←</a>
+          <h1>Profile</h1>
+        </header>
+        <header v-else>
+          <h1>People</h1>
+        </header>
+        <p v-if="notice" role="status">{{ notice }}</p>
+        <p v-if="error" role="alert">{{ error }}</p>
+        <button v-if="editorRoute && session === null" class="introduce-button"
+          type="button" @click="logIn">Log in to introduce yourself</button>
+        <p v-else-if="editorRoute && isFirstPoll && !discoveryError" role="status">
+          Loading profile…
+        </p>
+
+        <form v-if="editorRoute && editing" class="profile-form" @submit.prevent="saveProfile">
+          <label>Name
+            <input v-model="name" type="text" autocomplete="name" maxlength="100" required>
+          </label>
+          <label class="profile-photo-picker">
+            <span class="profile-avatar profile-photo-preview">
+              <img v-if="photoPreview" :src="photoPreview" alt="Selected profile picture">
+              <graffiti-get-media v-else-if="myProfile?.value['profile picture'] && !removePhoto"
+                :url="myProfile.value['profile picture']"
+                :accept="{ types: ['image/*'], maxBytes: maxPhotoBytes }" v-slot="{ media }">
+                <img v-if="media" :src="media.dataUrl" alt="Current profile picture">
+                <span v-else aria-hidden="true">{{ name.slice(0, 1) || '+' }}</span>
+              </graffiti-get-media>
+              <span v-else aria-hidden="true">+</span>
+            </span>
+            <span>{{ photoPreview || (myProfile?.value['profile picture'] && !removePhoto)
+              ? 'Change profile picture' : 'Add profile picture (optional)' }}</span>
+            <input ref="photoInput" class="profile-photo-input" type="file" accept="image/*"
+              @change="selectPhoto">
+          </label>
+          <button v-if="photoPreview || (myProfile?.value['profile picture'] && !removePhoto)"
+            type="button" @click="clearPhoto">Remove picture</button>
+          <label>Pronouns (optional)
+            <input v-model="pronouns" type="text" autocomplete="off" maxlength="50">
+          </label>
+          <label>What are your research interests? (1–2 sentences)
+            <textarea v-model="interests" rows="3" maxlength="300" required></textarea>
+          </label>
+          <fieldset>
+            <legend>Are you presenting anything?</legend>
+            <input v-model="presentationSearch" type="search" autocomplete="off"
+              aria-label="Search presentations" placeholder="Search titles or authors"
+              :disabled="!program">
+            <p v-if="programLoading" role="status">Loading program…</p>
+            <p v-else-if="programError" role="status">Program search is unavailable right now.</p>
+            <ul v-if="presentations.length">
+              <li v-for="id in presentations" :key="id">
+                <button class="paper-added" type="button" @click="removePresentation(id)"
+                  :aria-label="`Remove ${presentationTitle(id)}`">Added</button>
+                {{ presentationTitle(id) }}<small v-if="presentationAuthors(id)">
+                  — {{ presentationAuthors(id) }}
+                </small>
+              </li>
+            </ul>
+            <ul v-if="presentationMatches.length">
+              <li v-for="item in presentationMatches" :key="item.id">
+                <button class="paper-add" type="button" @click="addPresentation(item)"
+                  :aria-label="`Add ${item.title}`">Add</button>
+                {{ item.title }}<small v-if="item.authors"> — {{ item.authors }}</small>
+              </li>
+            </ul>
+            <p v-else-if="presentationSearch.trim().length >= 2 && program?.contents &&
+              !matchingPresentations.length">No matches.</p>
+          </fieldset>
+          <fieldset>
+            <legend>Are you interested in meeting other researchers?</legend>
+            <label><input v-model="openToMeeting" type="radio" name="open-to-meeting"
+              :value="true" required> Yes! I want to meet other researchers</label>
+            <label><input v-model="openToMeeting" type="radio" name="open-to-meeting"
+              :value="false" required> No, not right now</label>
+          </fieldset>
+          <div v-if="openToMeeting === true">
+            <label for="profile-contact">How should researchers reach out to you?</label>
+            <small id="contact-help">
+              You can share an email, messaging handle, or where to find you in person.
+              What you write here will be public.
+            </small>
+            <textarea id="profile-contact" v-model="contact" rows="2" maxlength="300"
+              required aria-describedby="contact-help"></textarea>
+          </div>
+          <div class="profile-form-actions">
+            <button type="submit" :disabled="busy">{{ busy ? 'Saving…' : 'Save profile' }}</button>
+          </div>
+        </form>
+
+        <template v-if="profileRoute">
+          <p v-if="isFirstPoll && !discoveryError" role="status">Loading profile…</p>
+          <p v-else-if="!selectedProfile && !discoveryError" role="status">Profile not found.</p>
+          <article v-if="selectedProfile" class="profile-detail">
+            <header class="profile-identity">
+              <div class="profile-avatar">
+                <graffiti-get-media v-if="selectedProfile.value['profile picture']"
+                  :url="selectedProfile.value['profile picture']"
+                  :accept="{ types: ['image/*'], maxBytes: maxPhotoBytes }"
+                  v-slot="{ media }">
+                  <img v-if="media" :src="media.dataUrl" alt="">
+                  <span v-else aria-hidden="true">{{ selectedProfile.value.name.slice(0, 1) }}</span>
+                </graffiti-get-media>
+                <span v-else aria-hidden="true">{{ selectedProfile.value.name.slice(0, 1) }}</span>
+              </div>
+              <div>
+                <h2>{{ selectedProfile.value.name }}
+                  <small v-if="selectedProfile.value.pronouns">({{ selectedProfile.value.pronouns }})</small>
+                </h2>
+                <graffiti-actor-to-handle :actor="selectedProfile.actor" v-slot="{ handle }">
+                  <small v-if="handle" class="profile-handle">@{{ handle.replace(/^@/, '') }}</small>
+                </graffiti-actor-to-handle>
+              </div>
+            </header>
+            <div v-if="selectedProfile.value['presentation IDs']?.length || selectedProfile.value['open to meeting']"
+              class="profile-badges">
+              <span v-if="selectedProfile.value['open to meeting']" class="meeting">🤝 Open to meeting</span>
+              <span v-if="selectedProfile.value['presentation IDs']?.length" class="presenter">🎤 Presenter</span>
+            </div>
+            <section>
+              <h3>Research interests</h3>
+              <p><template v-for="(part, index) in researchParts(selectedProfile.value['research interests'])"
+                :key="index"><a v-if="isResearchLink(part)" :href="part">{{ part }}</a><template
+                v-else>{{ part }}</template></template></p>
+            </section>
+            <section v-if="selectedProfile.value['presentation IDs']?.length">
+              <h3>Presenting</h3>
+              <ul>
+                <li v-for="id in selectedProfile.value['presentation IDs']" :key="id">
+                  {{ presentationTitle(id) }}<small v-if="presentationAuthors(id)">
+                    — {{ presentationAuthors(id) }}</small>
+                </li>
+              </ul>
+            </section>
+            <section v-if="selectedProfile.value['open to meeting']">
+              <h3>How to reach me</h3>
+              <p>{{ selectedProfile.value['how to reach me'] }}</p>
+            </section>
+            <div v-if="selectedProfile.actor === session?.actor" class="profile-actions">
+              <button class="profile-edit" type="button" :disabled="busy"
+                @click="openEditor">Edit profile</button>
+              <button type="button" :disabled="busy" @click="removeProfile">
+                {{ busy ? 'Deleting…' : 'Delete profile' }}
+              </button>
+            </div>
+          </article>
+        </template>
+
+        <template v-if="!editorRoute && !profileRoute">
+        <div v-if="profiles.length" class="people-search" role="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"></circle><path d="m16 16 5 5"></path>
+          </svg>
+          <input v-model="search" type="search" autocomplete="off"
+            aria-label="Search people" placeholder="Name, interest, or presentation">
+        </div>
+        <fieldset v-if="profiles.length" class="people-filters" aria-label="Filter people">
+          <label class="meeting"><input v-model="meetingOnly" type="checkbox"> 🤝 Open to meeting</label>
+          <label class="presenter"><input v-model="presentersOnly" type="checkbox"> 🎤 Presenters</label>
+        </fieldset>
+        <a v-if="!isFirstPoll && session && !myProfile"
+          class="introduce-button" :href="editorHref">Introduce yourself</a>
+        <button v-else-if="session === null" class="introduce-button"
+          type="button" @click="logIn">Log in to introduce yourself</button>
+        <p v-if="discoveryError" role="status">
+          Could not load profiles: {{ discoveryError.message }}. Retrying…
+        </p>
+        <p v-else-if="isFirstPoll" role="status">Loading people…</p>
+        <p v-else-if="!profiles.length">No profiles yet. Introduce yourself!</p>
+        <p v-else-if="!visibleProfiles.length">No people match that search.</p>
+        <ul v-if="visibleProfiles.length" class="profile-list">
+          <li v-for="profile in visibleProfiles" :key="profile.actor">
+            <article class="profile-card">
+              <a :href="profileHref(profile.actor)">
+                <header class="profile-identity">
+                  <div class="profile-avatar">
+                    <graffiti-get-media v-if="profile.value['profile picture']"
+                      :url="profile.value['profile picture']"
+                      :accept="{ types: ['image/*'], maxBytes: maxPhotoBytes }"
+                      v-slot="{ media }">
+                      <img v-if="media" :src="media.dataUrl" alt="">
+                      <span v-else aria-hidden="true">{{ profile.value.name.slice(0, 1) }}</span>
+                    </graffiti-get-media>
+                    <span v-else aria-hidden="true">{{ profile.value.name.slice(0, 1) }}</span>
+                  </div>
+                  <div>
+                    <h2>{{ profile.value.name }}
+                      <small v-if="profile.value.pronouns">({{ profile.value.pronouns }})</small>
+                    </h2>
+                    <graffiti-actor-to-handle :actor="profile.actor" v-slot="{ handle }">
+                      <small v-if="handle" class="profile-handle">@{{ handle.replace(/^@/, '') }}</small>
+                    </graffiti-actor-to-handle>
+                  </div>
+                </header>
+                <div v-if="profile.value['presentation IDs']?.length || profile.value['open to meeting']"
+                  class="profile-badges">
+                  <span v-if="profile.value['open to meeting']" class="meeting">🤝 Open to meeting</span>
+                  <span v-if="profile.value['presentation IDs']?.length" class="presenter">🎤 Presenter</span>
+                </div>
+                <p>{{ profile.value['research interests'] }}</p>
+              </a>
+            </article>
+          </li>
+        </ul>
+        </template>
+      </section>
+    </template>
+
     <template id="chat-room-template">
       <section class="chat" :aria-label="title">
         <header>
           <div class="chat-heading">
             <a v-if="backHref" class="chat-back" :href="backHref"
               aria-label="Back to rooms" title="Back to rooms">←</a>
-            <h1><a v-if="href" :href="href">{{ title }}</a><template v-else>{{ title }}</template></h1>
+            <div class="chat-heading-content">
+              <h1 ref="sessionTitle" class="chat-title"
+                :class="{ 'more-left': sessionMoreLeft, 'more-right': sessionMoreRight }"
+                @scroll="updateSessionEdges"><a v-if="href" :href="href">{{ title }}</a><template v-else>{{ title }}</template></h1>
+              <p v-if="context" class="chat-context">
+                <span>{{ context.room }}</span>
+                <template v-if="context.time"><span aria-hidden="true">·</span><span>{{ context.time }}</span></template>
+              </p>
+            </div>
           </div>
-          <p v-if="subtitles.length" class="chat-subtitles">
-            <span v-for="item in subtitles" :key="item.label">
-              <strong>{{ item.label }}</strong><template v-if="item.text"> — {{ item.text }}</template>
-            </span>
-          </p>
         </header>
 
         <section ref="messageList" class="chat-log"
@@ -783,7 +1478,16 @@
             @click="deleteFromMenu">Delete</button>
         </div>
 
-        <form autocomplete="off" @submit.prevent="sendMessage">
+        <div v-if="session && !draft.trim() && suggestions.length" class="chat-suggestions"
+          ref="suggestionList" role="group" aria-label="Suggestions"
+          :class="{ 'more-left': suggestionsMoreLeft, 'more-right': suggestionsMoreRight }"
+          @scroll="updateSuggestionEdges">
+          <span aria-hidden="true">Suggestions</span>
+          <button v-for="suggestion in suggestions" :key="suggestion.label" type="button"
+            @click="useSuggestion(suggestion)">{{ suggestion.label }}</button>
+        </div>
+        <form autocomplete="off" :class="{ 'login-form': session === null }"
+          @submit.prevent="sendMessage">
           <span v-if="session === undefined">Checking your account…</span>
           <button v-else-if="session === null" type="button" :disabled="accountBusy"
             @click="logIn">Log in to chat</button>
@@ -792,7 +1496,6 @@
               aria-label="Message" placeholder="Message" autocomplete="off" maxlength="1000"
               enterkeyhint="send" @focus="closeActions" @input="resizeComposer"
               @keydown="onComposerKeydown"></textarea>
-            <button type="submit" :disabled="!draft.trim()">Send</button>
           </template>
         </form>
         <p v-if="accountError" role="alert">{{ accountError }}</p>
