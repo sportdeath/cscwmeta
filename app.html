@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>The Hallway Track</title>
+    <script src="https://social.wiki/init.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css" />
+    <style>
+      body { max-width: none; margin: 0; padding: 0; }
+      #app { box-sizing: border-box; height: 100dvh; min-height: 25rem; display: flex; flex-direction: column; }
+      #app > main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      .room-browser { box-sizing: border-box; width: 100%; max-width: 50rem; flex: 1; min-height: 0; margin: auto; padding: 1rem; overflow-y: auto; }
+      .room-browser h1 { margin: 0 0 .5rem; font-size: 1.5rem; }
+      .room-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: .5rem; list-style: none; margin: 0; padding: 0; }
+      .room-list li { min-width: 0; }
+      .room-list a, .inactive-rooms a { box-sizing: border-box; display: block; height: 100%; padding: .7rem 1rem; border-radius: .35rem; color: inherit; text-decoration: none; }
+      .room-list a { border: 2px solid color-mix(in srgb, currentColor 35%, var(--border)); background: var(--background-alt); }
+      .inactive-rooms a { border: 1px solid var(--border); background: var(--background-body); }
+      .room-list a:hover { background: var(--button-hover); }
+      .inactive-rooms a:hover { background: var(--background-alt); }
+      .room-browser a small { display: block; margin-top: .2rem; }
+      .room-location { color: var(--links); }
+      .room-location svg { width: 1em; height: 1em; margin-right: .2em; vertical-align: -.15em; }
+      .inactive-rooms { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: .5rem; list-style: none; margin: .5rem -10px 0; padding: 0 0 .5rem; }
+      .room-browser details { display: block; margin: .4rem 0 0; }
+      .room-browser summary { border: 1px solid var(--border); border-radius: .35rem; }
+      /* Temporary preview clock styling; remove with the preview controls. */
+      .preview-clock input { margin: .3rem .5rem .3rem 0; }
+      .chat { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      .chat > header { padding: 1rem 1rem 0; }
+      .chat-heading { display: flex; align-items: center; gap: .6rem; }
+      .chat-heading h1 { margin: 0; font-size: 1.5rem; }
+      .chat-heading h1 a { color: inherit; text-decoration: none; }
+      .chat-heading h1 a:hover { text-decoration: underline; }
+      .chat-back { flex: none; padding: .15rem .5rem; border: 1px solid var(--border); border-radius: .35rem; text-decoration: none; }
+      .chat-subtitles { display: flex; flex-wrap: wrap; gap: .2rem 1rem; margin: .2rem 0 .5rem; font-size: .9rem; }
+      .chat-subtitles strong { color: var(--links); }
+      .chat-log { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; border-block: 1px solid var(--border); padding: .5rem 1rem; }
+      .chat-log.menu-open { overflow-y: hidden; touch-action: none; }
+      .messages { display: flex; flex-direction: column; gap: .5rem; list-style: none; margin: 0; padding: 0; }
+      .messages li { display: flex; align-items: center; gap: .35rem; transition: opacity .15s ease; }
+      .messages li.own { justify-content: flex-end; }
+      .messages li.schedule-marker { justify-content: center; text-align: center; }
+      .schedule-marker aside { max-width: 32rem; margin: .5rem; color: var(--text-muted, #666); font-size: .9rem; }
+      .schedule-marker strong, .schedule-marker small { display: block; }
+      .message-bubble { box-sizing: border-box; width: fit-content; min-width: 0; max-width: min(80%, 32rem); margin: 0; padding: .55rem .8rem; border-radius: 1rem 1rem 1rem .25rem; background: var(--background-alt); }
+      .messages li.own .message-bubble { border-radius: 1rem 1rem .25rem 1rem; background: color-mix(in srgb, var(--links) 16%, var(--background)); }
+      .messages header { font-size: .9em; }
+      .messages time { color: var(--text-muted, #666); font-size: .85em; }
+      .messages p { margin: .2rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .messages footer { display: flex; justify-content: flex-start; align-items: center; gap: .3rem; min-height: 1.25rem; }
+      .messages li.own footer { justify-content: flex-end; }
+      .delivery-status { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; flex: none; width: 1.1rem; height: 1.1rem; border: 1px solid currentColor; border-radius: 50%; color: var(--text-muted, #666); font-size: .8rem; line-height: 1; }
+      .delivery-status.sending { border-top-color: transparent; animation: spin .8s linear infinite; }
+      .delivery-status.sent, .delivery-status.saved { border-color: transparent; }
+      .delivery-status.failed { color: #a43d31; }
+      .message-actions-trigger { flex: none; box-sizing: border-box; width: 2rem; height: 2rem; margin: 0; padding: 0; border: 0; border-radius: .4rem; background: transparent; color: var(--text-muted, #666); font-size: 1.4rem; line-height: 1; opacity: 0; }
+      .messages li.own:hover .message-actions-trigger, .messages li.own:focus-within .message-actions-trigger, .message-actions-trigger[aria-expanded="true"] { opacity: 1; }
+      .message-actions-trigger:hover, .message-actions-trigger:focus-visible { background: var(--button-hover); }
+      .message-scrim { position: fixed; inset: 0; z-index: 9; background: transparent; touch-action: none; }
+      .message-actions-menu { position: fixed; z-index: 10; box-sizing: border-box; min-width: 6rem; padding: .25rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--background); box-shadow: 0 .4rem 1rem #0003; }
+      .message-actions-menu button { box-sizing: border-box; width: 100%; margin: 0; }
+      .chat-log.press-menu-open .messages li:not(.selected) { opacity: .25; }
+      .messages li.selected { position: relative; z-index: 1; }
+      @media (hover: none) and (pointer: coarse) {
+        .message-actions-trigger { display: none; }
+        .messages li.own .message-bubble,
+        .messages li.own .message-bubble * {
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          user-select: none;
+        }
+      }
+      .messages small { display: block; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        .delivery-status.sending { animation: none; border-top-color: currentColor; }
+        .messages li { transition: none; }
+      }
+      .chat form { display: flex; align-items: flex-end; gap: .5rem; margin: 0; padding: .75rem 1rem 1rem; }
+      .chat form textarea { box-sizing: border-box; flex: 1; min-width: 0; min-height: 2.5rem; max-height: 9rem; margin: 0; resize: none; overflow-y: auto; }
+      .chat form button { margin: 0; }
+    </style>
+    <script type="module">
+      import { computed, createApp, nextTick, onMounted, onScopeDispose, reactive, ref, watch } from "vue";
+      import {
+        GraffitiPlugin,
+        useGraffiti,
+        useGraffitiDiscover,
+        useGraffitiSession,
+      } from "@graffiti-garden/wrapper-vue";
+
+      // This instance uses a conference-specific channel. Other chats can
+      // render the same component with a different channel and title.
+      const hallwayChannel = "cscw-meta:2026:hallway:v1";
+      const programListUrl = "https://files.sigchi.org/conference/cache/program-list";
+      const messageSchema = {
+        properties: {
+          value: {
+            type: "object",
+            required: ["content", "time"],
+            properties: {
+              content: { type: "string", minLength: 1 },
+              time: { type: "number" },
+            },
+          },
+        },
+      };
+      const timeFormatter = new Intl.DateTimeFormat(undefined, {
+        hour: "numeric", minute: "2-digit",
+      });
+      const ChatRoom = {
+        template: "#chat-room-template",
+        props: {
+          channel: { type: String, required: true },
+          title: { type: String, required: true },
+          href: { type: String, default: "" },
+          backHref: { type: String, default: "" },
+          subtitles: { type: Array, default: () => [] },
+          markers: { type: Array, default: () => [] },
+          markerTimeZone: { type: String, default: "" },
+          // Only the active room should run the expensive live poll.
+          autopoll: { type: Boolean, default: false },
+        },
+        setup(props) {
+          const graffiti = useGraffiti();
+          const session = useGraffitiSession();
+          const { objects, isFirstPoll, error: discoveryError } = useGraffitiDiscover(
+            () => [props.channel], messageSchema, undefined, () => props.autopoll,
+          );
+          const draft = ref("");
+          const pending = ref([]);
+          const accountBusy = ref(false);
+          const accountError = ref("");
+          const messageList = ref(null);
+          const messageInput = ref(null);
+          const deletingUrls = reactive(new Set());
+          const deletedUrls = reactive(new Set());
+          const deleteErrors = reactive(new Map());
+          const actionMenu = ref(null);
+          const actionMenuButton = ref(null);
+          const touchMenuMedia = window.matchMedia("(hover: none) and (pointer: coarse)");
+          let lastMessageTime = 0;
+          let pressTimer;
+          let pressStart;
+
+          // Keep an optimistic copy until discovery contains the saved object.
+          // Consecutive local sends get distinct timestamps for matching.
+          const messageItems = computed(() => {
+            const saved = objects.value.filter((object) => !deletedUrls.has(object.url))
+              .map((object) => ({
+                key: object.url,
+                url: object.url,
+                actor: object.actor,
+                content: object.value.content,
+                time: object.value.time,
+                status: "saved",
+              }));
+            const savedMessages = new Set(saved.map((message) =>
+              `${message.actor}\u0000${message.content}\u0000${message.time}`
+            ));
+            return [...saved, ...pending.value.filter((message) =>
+              !deletedUrls.has(message.url) &&
+              !savedMessages.has(`${message.actor}\u0000${message.content}\u0000${message.time}`)
+            )].sort((a, b) => a.time - b.time ||
+              a.key.localeCompare(b.key));
+          });
+          const timelineItems = computed(() => [...props.markers, ...messageItems.value]
+            .sort((a, b) => a.time - b.time ||
+              (a.kind !== b.kind ? a.kind === "marker" ? -1 : 1 :
+                a.key.localeCompare(b.key))));
+          const markerTimeFormatter = computed(() => new Intl.DateTimeFormat(undefined, {
+            weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+            timeZone: props.markerTimeZone || undefined,
+          }));
+
+          onMounted(() => {
+            const log = messageList.value;
+            if (log) log.scrollTop = log.scrollHeight;
+          });
+          watch(() => timelineItems.value.length, async () => {
+            const log = messageList.value;
+            if (!log) return;
+            const nearBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 96;
+            await nextTick();
+            if (nearBottom) log.scrollTop = log.scrollHeight;
+          });
+
+          async function logIn() {
+            accountBusy.value = true;
+            accountError.value = "";
+            try { await graffiti.login(); }
+            catch (error) { accountError.value = error.message || "Could not log in."; }
+            finally { accountBusy.value = false; }
+          }
+
+          async function postMessage(message) {
+            const currentSession = session.value;
+            if (!currentSession || currentSession.actor !== message.actor) return;
+            message.status = "sending";
+            message.error = "";
+            try {
+              const posted = await graffiti.post({
+                value: {
+                  content: message.content,
+                  time: message.time,
+                },
+                channels: [props.channel],
+              }, currentSession);
+              message.url = posted.url;
+              message.status = "sent";
+            } catch (error) {
+              message.status = "failed";
+              message.error = error.message || "Could not send this message.";
+            }
+          }
+
+          function sendMessage() {
+            const content = draft.value.trim();
+            if (!session.value || !content || content.length > 1000) return;
+            closeActions();
+            lastMessageTime = Math.max(Date.now(), lastMessageTime + 1);
+            const message = reactive({
+              key: `pending:${lastMessageTime}`,
+              actor: session.value.actor,
+              content,
+              time: lastMessageTime,
+              status: "sending",
+              error: "",
+            });
+            pending.value.push(message);
+            draft.value = "";
+            nextTick(() => {
+              resizeComposer();
+              messageInput.value?.focus();
+            });
+            postMessage(message);
+          }
+
+          function resizeComposer() {
+            const input = messageInput.value;
+            if (!input) return;
+            input.style.height = "auto";
+            input.style.height = `${input.scrollHeight + 2}px`;
+          }
+
+          function onComposerKeydown(event) {
+            if (event.key !== "Enter" || event.shiftKey || event.isComposing ||
+              event.keyCode === 229) return;
+            event.preventDefault();
+            sendMessage();
+          }
+
+          async function deleteMessage(message) {
+            if (message.status === "failed") {
+              pending.value = pending.value.filter((item) => item.key !== message.key);
+              return;
+            }
+            const currentSession = session.value;
+            if (!currentSession || currentSession.actor !== message.actor ||
+              !message.url || deletingUrls.has(message.url)) return;
+            deletingUrls.add(message.url);
+            deleteErrors.delete(message.url);
+            try {
+              await graffiti.delete(message.url, currentSession);
+              deletedUrls.add(message.url);
+              pending.value = pending.value.filter((item) => item.url !== message.url);
+            } catch (error) {
+              deleteErrors.set(message.url, error.message || "Could not delete this message.");
+            } finally {
+              deletingUrls.delete(message.url);
+            }
+          }
+
+          function closeActions() {
+            actionMenu.value = null;
+          }
+
+          function showActions(message, x, y) {
+            const width = 128;
+            const height = 48;
+            actionMenu.value = {
+              message,
+              mode: "button",
+              left: Math.max(8, Math.min(x, window.innerWidth - width - 8)),
+              top: y + height + 8 < window.innerHeight ? y : Math.max(8, y - height - 8),
+            };
+            nextTick(() => actionMenuButton.value?.focus());
+          }
+
+          function showPressedActions(message, bubble) {
+            if (!bubble.isConnected) return;
+            window.getSelection()?.removeAllRanges();
+            const rect = bubble.getBoundingClientRect();
+            const width = 128;
+            const gap = 8;
+            const viewportBottom = window.visualViewport
+              ? window.visualViewport.offsetTop + window.visualViewport.height
+              : window.innerHeight;
+            const lift = Math.max(0, rect.bottom + gap + 48 + 8 - viewportBottom);
+            actionMenu.value = {
+              message,
+              mode: "press",
+              lift,
+              left: Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8)),
+              top: rect.bottom + gap - lift,
+            };
+            nextTick(() => actionMenuButton.value?.focus());
+          }
+
+          function openActionsAtTrigger(message, trigger) {
+            if (!trigger) return;
+            const rect = trigger.getBoundingClientRect();
+            showActions(message, rect.right - 128, rect.bottom + 4);
+          }
+
+          function openActionsFromButton(message, event) {
+            openActionsAtTrigger(message, event.currentTarget);
+          }
+
+          function clearLongPress() {
+            if (pressTimer) clearTimeout(pressTimer);
+            pressTimer = undefined;
+            pressStart = undefined;
+          }
+
+          function startLongPress(message, event) {
+            if (message.actor !== session.value?.actor || event.pointerType === "mouse" ||
+              event.target.closest("a, button")) return;
+            clearLongPress();
+            const { clientX, clientY } = event;
+            const bubble = event.currentTarget;
+            pressStart = { x: clientX, y: clientY };
+            pressTimer = setTimeout(() => {
+              pressTimer = undefined;
+              showPressedActions(message, bubble);
+            }, 550);
+          }
+
+          function moveLongPress(event) {
+            if (pressTimer && pressStart &&
+              Math.hypot(event.clientX - pressStart.x, event.clientY - pressStart.y) > 10) {
+              clearLongPress();
+            }
+          }
+
+          function onMessageSelectStart(message, event) {
+            if (message.actor === session.value?.actor && touchMenuMedia.matches) {
+              event.preventDefault();
+            }
+          }
+
+          function onMessageContextMenu(message, event) {
+            if (message.actor !== session.value?.actor) return;
+            event.preventDefault();
+            clearLongPress();
+            if (actionMenu.value?.mode === "press" &&
+              actionMenu.value.message.key === message.key) return;
+            if (touchMenuMedia.matches) {
+              showPressedActions(message, event.currentTarget);
+            } else {
+              openActionsAtTrigger(message,
+                event.currentTarget.parentElement.querySelector(".message-actions-trigger"));
+            }
+          }
+
+          function deleteFromMenu() {
+            const message = actionMenu.value?.message;
+            closeActions();
+            if (message) deleteMessage(message);
+          }
+
+          function onEscape(event) {
+            if (event.key === "Escape") closeActions();
+          }
+
+          document.addEventListener("keydown", onEscape);
+          window.addEventListener("resize", closeActions);
+          onScopeDispose(() => {
+            clearLongPress();
+            document.removeEventListener("keydown", onEscape);
+            window.removeEventListener("resize", closeActions);
+          });
+
+          function formatTime(time) {
+            const date = new Date(time);
+            return Number.isNaN(date.getTime()) ? "" : timeFormatter.format(date);
+          }
+
+          function formatMarkerTime(time) {
+            return markerTimeFormatter.value.format(new Date(time));
+          }
+
+          function dateTime(time) {
+            const date = new Date(time);
+            return Number.isNaN(date.getTime()) ? null : date.toISOString();
+          }
+
+          // Render message links as text nodes and anchors, never as HTML.
+          function textParts(content) {
+            return content.split(/(https?:\/\/[^\s<>"']+|#\/[^\s<>"']+)/g);
+          }
+
+          function isLink(part) {
+            return /^(https?:\/\/|#\/)/.test(part);
+          }
+
+          function deliveryLabel(status) {
+            return status === "sending" ? "Sending" :
+              status === "failed" ? "Failed to send" : "Sent";
+          }
+
+          return {
+            session, isFirstPoll, discoveryError, draft, accountBusy,
+            accountError, messageList, messageInput, messageItems, timelineItems, logIn,
+            sendMessage, resizeComposer, onComposerKeydown, postMessage,
+            startLongPress, moveLongPress, clearLongPress, onMessageSelectStart,
+            onMessageContextMenu,
+            openActionsFromButton, deleteFromMenu, closeActions, actionMenu,
+            actionMenuButton, deletingUrls, deleteErrors,
+            formatTime, formatMarkerTime, dateTime, textParts, isLink, deliveryLabel,
+          };
+        },
+      };
+
+      function setup() {
+        const program = ref(null);
+        const programLoading = ref(true);
+        const programError = ref("");
+        const routeAddress = ref(window.address || "");
+        function syncRoute() { routeAddress.value = window.address || ""; }
+        window.addEventListener("addresschange", syncRoute);
+        onScopeDispose(() => window.removeEventListener("addresschange", syncRoute));
+
+        async function loadProgram() {
+          programLoading.value = true;
+          programError.value = "";
+          try {
+            const listResponse = await fetch(programListUrl);
+            if (!listResponse.ok) throw new Error("Could not load the conference list.");
+            const list = await listResponse.json();
+            if (!Array.isArray(list)) throw new Error("The conference list changed format.");
+            const record = list.find((item) =>
+              item.conference?.shortName === "CSCW" &&
+              item.conference?.year === 2026 &&
+              item.publicationInfo?.publicationStatus === "PUBLISHED" &&
+              item.publicationInfo?.isProgramEnabled
+            );
+            if (!record) throw new Error("The CSCW 2026 program is unavailable.");
+            const { id } = record.conference;
+            const { version } = record.publicationInfo;
+            const response = await fetch(
+              `https://files.sigchi.org/conference/cache/${id}/${version}/program`
+            );
+            if (!response.ok) throw new Error("Could not load the program.");
+            const data = await response.json();
+            if (!Array.isArray(data.rooms) || !Array.isArray(data.sessions)) {
+              throw new Error("The program changed format.");
+            }
+            const offsetMinutes = data.conference?.timeZoneOffset;
+            if (!Number.isFinite(offsetMinutes) || !data.conference?.timeZoneName) {
+              throw new Error("The program time zone is unavailable.");
+            }
+            // SIGCHI encodes conference wall times as UTC milliseconds. Apply
+            // its UTC offset to turn those values into actual instants.
+            program.value = {
+              ...data,
+              sessions: data.sessions.map((item) => ({
+                ...item,
+                startDate: Number.isFinite(item.startDate)
+                  ? item.startDate - offsetMinutes * 60000 : item.startDate,
+                endDate: Number.isFinite(item.endDate)
+                  ? item.endDate - offsetMinutes * 60000 : item.endDate,
+              })),
+            };
+          } catch (error) {
+            programError.value = error.message || "Could not load rooms.";
+          } finally {
+            programLoading.value = false;
+          }
+        }
+
+        const actualNow = ref(Date.now());
+        const clockInterval = setInterval(() => { actualNow.value = Date.now(); }, 30000);
+        onScopeDispose(() => clearInterval(clockInterval));
+        const conferenceTimeZone = computed(() =>
+          program.value?.conference?.timeZoneName || "America/Denver");
+
+        // Temporary preview clock: remove this block and use actualNow in
+        // roomViews when testing is done. Chat messages always use real time.
+        const previewTime = ref("");
+        const viewedNow = computed(() => {
+          const preview = previewTime.value ? Date.parse(previewTime.value) : NaN;
+          return Number.isFinite(preview) ? preview : actualNow.value;
+        });
+        function resetPreviewTime() { previewTime.value = ""; }
+        // End temporary preview clock.
+
+        function timeUntil(timestamp) {
+          const minutes = Math.max(1, Math.ceil((timestamp - viewedNow.value) / 60000));
+          if (minutes < 60) return `${minutes} ${minutes === 1 ? "min" : "mins"}`;
+          const hours = Math.floor(minutes / 60);
+          const remainingMinutes = minutes % 60;
+          if (hours < 24) return `${hours} ${hours === 1 ? "hr" : "hrs"}` +
+            (remainingMinutes ? ` ${remainingMinutes} ${remainingMinutes === 1 ? "min" : "mins"}` : "");
+          const days = Math.floor(hours / 24);
+          const remainingHours = hours % 24;
+          return `${days} ${days === 1 ? "day" : "days"}` +
+            (remainingHours ? ` ${remainingHours} ${remainingHours === 1 ? "hr" : "hrs"}` : "");
+        }
+        const roomViews = computed(() => {
+          const data = program.value;
+          if (!data) return [];
+          const sessionsByRoom = new Map();
+          for (const session of data.sessions) {
+            if (!session.roomId || !Number.isFinite(session.startDate) ||
+              !Number.isFinite(session.endDate)) continue;
+            if (!sessionsByRoom.has(session.roomId)) sessionsByRoom.set(session.roomId, []);
+            sessionsByRoom.get(session.roomId).push(session);
+          }
+          return data.rooms.flatMap((room) => {
+            const sessions = sessionsByRoom.get(room.id);
+            if (!sessions?.length) return [];
+            sessions.sort((a, b) => a.startDate - b.startDate);
+            const current = sessions.find((session) =>
+              session.startDate <= viewedNow.value && viewedNow.value < session.endDate
+            );
+            const last = sessions.filter((session) => session.endDate <= viewedNow.value)
+              .sort((a, b) => a.endDate - b.endDate).at(-1);
+            const next = sessions.find((session) => session.startDate > viewedNow.value);
+            return [{ ...room, sessions, current, last, next }];
+          });
+        });
+        const activeRooms = computed(() => roomViews.value
+          .filter((room) => room.current)
+          .sort((a, b) => a.name.localeCompare(b.name)));
+        const inactiveRooms = computed(() => roomViews.value
+          .filter((room) => !room.current)
+          .sort((a, b) => (b.last?.endDate || 0) - (a.last?.endDate || 0) ||
+            (a.next?.startDate || Infinity) - (b.next?.startDate || Infinity) ||
+            a.name.localeCompare(b.name)));
+        const routeRoomId = computed(() => {
+          const match = /^room\/(\d+)$/.exec(routeAddress.value);
+          return match ? Number(match[1]) : null;
+        });
+        const selectedRoom = computed(() => roomViews.value.find((room) =>
+          room.id === routeRoomId.value
+        ));
+        const selectedTitle = computed(() => routeAddress.value === "hallway"
+          ? "The Hallway Track" : selectedRoom.value?.name || "");
+        const selectedHref = computed(() => routeAddress.value === "hallway"
+          ? "?/hallway" : selectedRoom.value ? `?/room/${selectedRoom.value.id}` : "");
+        const selectedSubtitles = computed(() => selectedRoom.value ? [
+          selectedRoom.value.current
+            ? { label: `Happening now · ${timeUntil(selectedRoom.value.current.endDate)} left`,
+                text: selectedRoom.value.current.name }
+            : { label: "No session in progress", text: "" },
+        ] : []);
+        const selectedMarkers = computed(() => {
+          const room = selectedRoom.value;
+          const data = program.value;
+          if (!room || !data) return [];
+          const contentById = new Map((data.contents || []).map((item) => [item.id, item]));
+          const durationByType = new Map((data.contentTypes || []).map((item) =>
+            [item.id, item.duration]));
+          const markers = [];
+          for (const session of room.sessions) {
+            if (session.startDate > viewedNow.value) break;
+            const contents = (session.contentIds || [])
+              .map((id) => contentById.get(id)).filter(Boolean);
+            const durations = contents.map((item) =>
+              item.durationOverride ?? durationByType.get(item.typeId));
+            // The feed has no talk start times. Infer them only when ordered
+            // content durations exactly fill the session's scheduled time.
+            const timedTalks = contents.length > 1 && !session.isParallelPresentation &&
+              durations.every((duration) => Number.isFinite(duration) && duration > 0) &&
+              durations.reduce((sum, duration) => sum + duration, 0) * 60000 ===
+                session.endDate - session.startDate;
+            markers.push({
+              kind: "marker", key: `session:${session.id}`, time: session.startDate,
+              label: "Session begins", title: session.name,
+              detail: timedTalks ? `First talk: ${contents[0].title}` : "",
+            });
+            if (!timedTalks) continue;
+            let talkStart = session.startDate;
+            for (let index = 1; index < contents.length; index++) {
+              talkStart += durations[index - 1] * 60000;
+              if (talkStart > viewedNow.value) break;
+              markers.push({
+                kind: "marker", key: `talk:${session.id}:${contents[index].id}`,
+                time: talkStart, label: "Talk begins", title: contents[index].title,
+              });
+            }
+          }
+          return markers.sort((a, b) => a.time - b.time || a.key.localeCompare(b.key));
+        });
+        const selectedChannel = computed(() => routeAddress.value === "hallway"
+          ? hallwayChannel : selectedRoom.value
+            ? `cscw-meta:2026:room:${selectedRoom.value.id}:v1` : null);
+
+        onMounted(() => { syncRoute(); loadProgram(); });
+        return {
+          program, programLoading, programError, loadProgram,
+          routeAddress, routeRoomId, activeRooms, inactiveRooms,
+          selectedTitle, selectedHref, selectedSubtitles, selectedMarkers, selectedChannel,
+          conferenceTimeZone, previewTime, resetPreviewTime, timeUntil,
+        };
+      }
+
+      createApp({
+        template: "#app-template",
+        components: { ChatRoom },
+        setup,
+      })
+        .use(GraffitiPlugin, { graffiti: new window.Graffiti() })
+        .mount("#app");
+    </script>
+  </head>
+  <body>
+    <div id="app"><p>Loading…</p></div>
+
+    <template id="app-template">
+      <main>
+        <nav v-if="!routeAddress" class="room-browser" aria-label="Chat rooms">
+          <h1>Happening now</h1>
+          <ul class="room-list">
+            <li><a href="?/hallway"><strong>The Hallway Track</strong></a></li>
+            <li v-for="room in activeRooms" :key="room.id">
+              <a :href="`?/room/${room.id}`">
+                <strong>{{ room.current.name }}</strong>
+                <small><span class="room-location"><svg viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" aria-hidden="true">
+                  <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
+                  <circle cx="12" cy="10" r="2.5" />
+                </svg>{{ room.name }}</span> · {{ timeUntil(room.current.endDate) }} left</small>
+              </a>
+            </li>
+          </ul>
+          <p v-if="programLoading" role="status">Loading rooms…</p>
+          <p v-else-if="programError" role="status">
+            {{ programError }} <button type="button" @click="loadProgram">Retry</button>
+          </p>
+          <template v-else-if="program">
+            <p v-if="!activeRooms.length">No scheduled sessions in progress.</p>
+            <details>
+              <summary>Inactive rooms ({{ inactiveRooms.length }})</summary>
+              <ul class="inactive-rooms">
+                <li v-for="room in inactiveRooms" :key="room.id">
+                  <a :href="`?/room/${room.id}`">
+                    <strong v-if="room.last">{{ room.last.name }}</strong>
+                    <strong v-else-if="room.next">{{ room.next.name }}</strong>
+                    <small><span class="room-location"><svg viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" aria-hidden="true">
+                      <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
+                      <circle cx="12" cy="10" r="2.5" />
+                    </svg>{{ room.name }}</span> · {{ room.last ? 'Last session' : 'Next session' }}</small>
+                  </a>
+                </li>
+              </ul>
+            </details>
+          </template>
+          <!-- Temporary preview clock: remove this details block after testing. -->
+          <details class="preview-clock">
+            <summary>{{ previewTime ? `Previewing ${previewTime.replace('T', ' ')}` : 'Preview time' }}</summary>
+            <label>Device time <input type="datetime-local" v-model="previewTime"></label>
+            <button v-if="previewTime" type="button" @click="resetPreviewTime">
+              Use current time
+            </button>
+          </details>
+        </nav>
+        <template v-else>
+          <!-- Key by channel so local chat state cannot leak between rooms. -->
+          <chat-room v-if="selectedChannel" :key="selectedChannel"
+            :channel="selectedChannel" :title="selectedTitle"
+            :href="selectedHref" back-href="?/"
+            :subtitles="selectedSubtitles" :markers="selectedMarkers"
+            :marker-time-zone="conferenceTimeZone"
+            :autopoll="true"></chat-room>
+          <template v-else>
+            <p><a href="?/">← Back to rooms</a></p>
+            <p v-if="routeRoomId !== null && programLoading" role="status">Loading room…</p>
+            <p v-else-if="routeRoomId !== null && programError" role="status">
+              {{ programError }} <button type="button" @click="loadProgram">Retry</button>
+            </p>
+            <p v-else role="status">Room not found.</p>
+          </template>
+        </template>
+      </main>
+    </template>
+
+    <template id="chat-room-template">
+      <section class="chat" :aria-label="title">
+        <header>
+          <div class="chat-heading">
+            <a v-if="backHref" class="chat-back" :href="backHref"
+              aria-label="Back to rooms" title="Back to rooms">←</a>
+            <h1><a v-if="href" :href="href">{{ title }}</a><template v-else>{{ title }}</template></h1>
+          </div>
+          <p v-if="subtitles.length" class="chat-subtitles">
+            <span v-for="item in subtitles" :key="item.label">
+              <strong>{{ item.label }}</strong><template v-if="item.text"> — {{ item.text }}</template>
+            </span>
+          </p>
+        </header>
+
+        <section ref="messageList" class="chat-log"
+          :class="{ 'menu-open': actionMenu, 'press-menu-open': actionMenu?.mode === 'press' }"
+          :aria-label="`${title} messages`"
+          role="log" aria-live="polite" aria-relevant="additions">
+          <p v-if="discoveryError" role="status">
+            Could not load messages: {{ discoveryError.message }}. Retrying…
+          </p>
+          <p v-if="isFirstPoll && !discoveryError" role="status">Loading messages…</p>
+          <p v-if="!isFirstPoll && !timelineItems.length && !discoveryError">
+            No messages yet. Start the conversation.
+          </p>
+          <ol v-if="timelineItems.length" class="messages">
+            <template v-for="message in timelineItems" :key="message.key">
+              <li v-if="message.kind === 'marker'" class="schedule-marker">
+                <aside>
+                  <small><time :datetime="dateTime(message.time)">{{ formatMarkerTime(message.time) }}</time>
+                    · {{ message.label }}</small>
+                  <strong>{{ message.title }}</strong>
+                  <small v-if="message.detail">{{ message.detail }}</small>
+                </aside>
+              </li>
+              <li v-else
+                :class="{ own: message.actor === session?.actor,
+                  selected: actionMenu?.mode === 'press' && actionMenu.message.key === message.key }"
+                :style="actionMenu?.mode === 'press' && actionMenu.message.key === message.key
+                  ? { transform: `translateY(-${actionMenu.lift}px)` } : null">
+                <button v-if="message.actor === session?.actor" class="message-actions-trigger"
+                  type="button" aria-label="Message actions" title="Message actions"
+                  :aria-expanded="actionMenu?.message.key === message.key"
+                  @click="openActionsFromButton(message, $event)">⋯</button>
+                <article class="message-bubble" @pointerdown="startLongPress(message, $event)"
+                  @pointermove="moveLongPress" @pointerup="clearLongPress"
+                  @pointercancel="clearLongPress" @pointerleave="clearLongPress"
+                  @selectstart="onMessageSelectStart(message, $event)"
+                  @contextmenu="onMessageContextMenu(message, $event)">
+                  <header v-if="message.actor !== session?.actor">
+                    <strong>
+                      <graffiti-actor-to-handle :actor="message.actor" v-slot="{ handle }">
+                        {{ handle || 'Account' }}
+                      </graffiti-actor-to-handle>
+                    </strong>
+                  </header>
+                  <p><template v-for="(part, index) in textParts(message.content)" :key="index"><a
+                    v-if="isLink(part)" :href="part">{{ part }}</a><template
+                    v-else>{{ part }}</template></template></p>
+                  <footer>
+                    <time :datetime="dateTime(message.time)">{{ formatTime(message.time) }}</time>
+                    <span v-if="message.actor === session?.actor" class="delivery-status"
+                      :class="message.status" :aria-label="deliveryLabel(message.status)"
+                      :title="deliveryLabel(message.status)">
+                      {{ message.status === 'sending' ? '' : message.status === 'failed' ? '!' : '✓' }}
+                    </span>
+                  </footer>
+                  <small v-if="message.status === 'failed'" role="alert">
+                    {{ message.error }}
+                    <button type="button" :disabled="session?.actor !== message.actor"
+                      @click="postMessage(message)">Retry</button>
+                  </small>
+                  <small v-if="deleteErrors.has(message.url)" role="alert">
+                    {{ deleteErrors.get(message.url) }}
+                  </small>
+                </article>
+              </li>
+            </template>
+          </ol>
+        </section>
+
+        <div v-if="actionMenu" class="message-scrim" aria-hidden="true"
+          @click="closeActions" @wheel.prevent @touchmove.prevent></div>
+        <div v-if="actionMenu" class="message-actions-menu"
+          :style="{ left: actionMenu.left + 'px', top: actionMenu.top + 'px' }">
+          <button ref="actionMenuButton" type="button"
+            :disabled="actionMenu.message.status === 'sending' || deletingUrls.has(actionMenu.message.url)"
+            @click="deleteFromMenu">Delete</button>
+        </div>
+
+        <form autocomplete="off" @submit.prevent="sendMessage">
+          <span v-if="session === undefined">Checking your account…</span>
+          <button v-else-if="session === null" type="button" :disabled="accountBusy"
+            @click="logIn">Log in to chat</button>
+          <template v-else>
+            <textarea ref="messageInput" v-model="draft" rows="1"
+              aria-label="Message" placeholder="Message" autocomplete="off" maxlength="1000"
+              enterkeyhint="send" @focus="closeActions" @input="resizeComposer"
+              @keydown="onComposerKeydown"></textarea>
+            <button type="submit" :disabled="!draft.trim()">Send</button>
+          </template>
+        </form>
+        <p v-if="accountError" role="alert">{{ accountError }}</p>
+      </section>
+    </template>
+  </body>
+</html>
