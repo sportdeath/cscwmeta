@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css" />
     <style>
       body { max-width: none; margin: 0; padding: 0; }
-      #app { height: 100dvh; min-height: 25rem; display: flex; flex-direction: column; }
+      #app { height: 100dvh; display: flex; flex-direction: column; }
       #app > header { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: .5rem 1rem; padding: .5rem .75rem; border-bottom: 1px solid var(--border); }
       #app > header h1 { min-width: 0; margin: 0; font-size: 1.3rem; line-height: 1.2; }
       #app > header h1 a { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -24,7 +24,13 @@
       .account-menu-panel button { width: 100%; margin: 0; white-space: nowrap; }
       #app > header > p { grid-column: 1 / -1; margin: 0; }
       #app > main { flex: 1 0 auto; display: flex; flex-direction: column; }
-      #app > main.viewport-route { flex: 1 1 0; min-height: 0; }
+      #app > main.viewport-route {
+        position: fixed;
+        inset-inline: 0;
+        top: var(--visible-viewport-top, 0px);
+        height: var(--visible-viewport-height, 100dvh);
+        min-height: 0;
+      }
       .site-status { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; }
       .site-status h2, .site-status p { margin: 0; }
       .dots::after {
@@ -42,7 +48,9 @@
       sw-transclude { display: block; flex: 1 0 auto; min-width: 0; }
       .viewport-route sw-transclude { flex: 1 1 0; height: 100%; min-height: 0; }
       .primary-action { background: #1769d1; border: 1px solid #1769d1; color: white; }
-      .primary-action:hover:not(:disabled) { background: #0e55ac; color: white; }
+      @media (hover: hover) and (pointer: fine) {
+        .primary-action:hover:not(:disabled) { background: #0e55ac; color: white; }
+      }
       a.primary-action { display: inline-block; padding: .5rem .75rem; border-radius: .35rem; text-decoration: none; }
       dialog { width: min(32rem, calc(100vw - 2rem)); box-sizing: border-box; background: var(--background); color: var(--text-main); }
       .dialog-actions { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
@@ -198,6 +206,25 @@
         const viewportRoute = computed(() =>
           !!window.route.parseQuery(siteQuery.value || "").address
         );
+
+        // The keyboard can shrink the visible viewport without changing 100dvh.
+        // Keep chat routes above it; the transcluded chat fills this region.
+        const visualViewport = window.visualViewport;
+        function syncVisibleViewport() {
+          document.documentElement.style.setProperty("--visible-viewport-height",
+            `${visualViewport?.height ?? window.innerHeight}px`);
+          document.documentElement.style.setProperty("--visible-viewport-top",
+            `${visualViewport?.offsetTop ?? 0}px`);
+        }
+        syncVisibleViewport();
+        visualViewport?.addEventListener("resize", syncVisibleViewport);
+        visualViewport?.addEventListener("scroll", syncVisibleViewport);
+        window.addEventListener("resize", syncVisibleViewport);
+        onScopeDispose(() => {
+          visualViewport?.removeEventListener("resize", syncVisibleViewport);
+          visualViewport?.removeEventListener("scroll", syncVisibleViewport);
+          window.removeEventListener("resize", syncVisibleViewport);
+        });
 
         const siteAddress = computed(() =>
           window.route.composeAddress(siteName, siteQuery.value)
