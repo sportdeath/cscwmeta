@@ -9,19 +9,22 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css" />
     <style>
       body { max-width: none; margin: 0; padding: 0; }
-      #app { min-height: 100dvh; display: flex; flex-direction: column; }
-      #app > header { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1rem; padding: .5rem .75rem; border-bottom: 1px solid var(--border); }
-      #app > header h1 { margin: 0; font-size: 1.3rem; line-height: 1.2; }
-      .header-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; margin-left: auto; }
+      #app { height: 100dvh; min-height: 25rem; display: flex; flex-direction: column; }
+      #app > header { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: .5rem 1rem; padding: .5rem .75rem; border-bottom: 1px solid var(--border); }
+      #app > header h1 { min-width: 0; margin: 0; font-size: 1.3rem; line-height: 1.2; }
+      #app > header h1 a { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .header-actions { display: flex; align-items: center; justify-content: flex-end; width: 100%; min-width: 0; gap: .5rem; }
       .header-actions > button, .account-menu { margin: 0; }
-      .account-menu { position: relative; overflow: visible; }
-      .account-menu[open] { padding-bottom: 0; }
-      .account-menu summary { border-radius: 6px; }
+      .header-actions > button, .account-menu summary { white-space: nowrap; }
+      .account-menu { position: relative; flex: 0 1 auto; min-width: 0; padding: 0; overflow: visible; }
+      .account-menu[open] { padding: 0; }
+      .account-menu summary { box-sizing: border-box; width: 100%; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; border-radius: 6px; }
       .account-menu[open] summary { margin-bottom: 0; }
       .account-menu-panel { position: absolute; z-index: 1; top: calc(100% + .25rem); right: 0; min-width: 100%; box-sizing: border-box; padding: .25rem; border: 1px solid var(--border); border-radius: .35rem; background: var(--background); }
       .account-menu-panel button { width: 100%; margin: 0; white-space: nowrap; }
-      #app > header > p { flex-basis: 100%; margin: 0; }
-      #app > main { flex: 1; display: flex; }
+      #app > header > p { grid-column: 1 / -1; margin: 0; }
+      #app > main { flex: 1 0 auto; display: flex; flex-direction: column; }
+      #app > main.viewport-route { flex: 1 1 0; min-height: 0; }
       .site-status { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; }
       .site-status h2, .site-status p { margin: 0; }
       .dots::after {
@@ -36,13 +39,23 @@
         50% { content: ".."; }
         75% { content: "..."; }
       }
-      sw-transclude { display: block; flex: 1; min-width: 0; }
+      sw-transclude { display: block; flex: 1 0 auto; min-width: 0; }
+      .viewport-route sw-transclude { flex: 1 1 0; height: 100%; min-height: 0; }
       .primary-action { background: #1769d1; border: 1px solid #1769d1; color: white; }
       .primary-action:hover:not(:disabled) { background: #0e55ac; color: white; }
       a.primary-action { display: inline-block; padding: .5rem .75rem; border-radius: .35rem; text-decoration: none; }
       dialog { width: min(32rem, calc(100vw - 2rem)); box-sizing: border-box; background: var(--background); color: var(--text-main); }
       .dialog-actions { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
       .dialog-actions form { margin: 0; }
+      .compact-label { display: none; }
+      @media (max-width: 40rem) {
+        #app > header { gap: .4rem; padding: .35rem .6rem; }
+        #app > header h1 { font-size: 1.1rem; }
+        .header-actions { gap: .35rem; }
+        .header-actions > button, .account-menu summary { padding: .35rem .55rem; font-size: .9rem; }
+        .full-label { display: none; }
+        .compact-label { display: inline; }
+      }
     </style>
     <script type="module">
       import { computed, createApp, onScopeDispose, ref, watch } from "vue";
@@ -179,6 +192,13 @@
         window.addEventListener("querychange", onQueryChange);
         onScopeDispose(() => window.removeEventListener("querychange", onQueryChange));
 
+        // The root room list grows with its contents. A chat needs a fixed
+        // viewport, otherwise 100dvh inside the iframe inherits the list's
+        // previous autosized height and cannot shrink on navigation.
+        const viewportRoute = computed(() =>
+          !!window.route.parseQuery(siteQuery.value || "").address
+        );
+
         const siteAddress = computed(() =>
           window.route.composeAddress(siteName, siteQuery.value)
         );
@@ -248,6 +268,7 @@
           displayed, editButton, editDialog, editUrl, adminVersion, admins,
           isAdmin, isFirstPoll, mediaError, myVersion, newerAdminVersion, openEditDialog,
           restoreFocus, selectedVersion, session, siteName, siteQuery,
+          viewportRoute,
           viewingAdminVersion, title
         };
       }
@@ -260,12 +281,13 @@
   <body>
     <div id="app"><main><section class="site-status" role="status"><h2 class="dots">Loading</h2></section></main></div>
     <template id="app-template">
-      <header>
+      <header v-if="!viewportRoute">
         <h1><a href="?/">{{ title }}</a></h1>
         <div class="header-actions">
           <button ref="editButton" class="primary-action" type="button"
+            aria-label="Edit this site"
             :disabled="isFirstPoll || (selectedVersion && displayed?.versionUrl !== selectedVersion.url)"
-            @click="openEditDialog">Edit this site</button>
+            @click="openEditDialog"><span class="full-label">Edit this site</span><span class="compact-label" aria-hidden="true">Edit</span></button>
           <details v-if="session" ref="accountMenu" class="account-menu">
             <summary>
               <graffiti-actor-to-handle :actor="session.actor" v-slot="{ handle }">
@@ -298,7 +320,7 @@
         </p>
       </header>
 
-      <main>
+      <main :class="{ 'viewport-route': viewportRoute }">
         <section v-if="session === undefined || isFirstPoll" class="site-status" role="status">
           <p v-if="discoveryError">Could not check site versions. Retrying…</p>
           <h2 v-else class="dots">Loading</h2>
@@ -314,7 +336,8 @@
           <h2 class="dots">Loading</h2>
         </section>
         <sw-transclude v-else :id="displayed.id" :name="siteName"
-          :srcdoc="displayed.html" :query="siteQuery" route="" autosize="height">
+          :srcdoc="displayed.html" :query="siteQuery" route=""
+          :autosize="viewportRoute ? 'off' : 'height'">
         </sw-transclude>
       </main>
 
