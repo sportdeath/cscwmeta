@@ -75,7 +75,6 @@
         "did:plc:numtqzbw74lmrguyvpzq6uf5", // Theia Henderson
         "did:plc:7t5bdvkgp3zy7gtdhf4dtjk2"  // David Karger
       ];
-      const hostedUrl = "https://cscwmeta.org"; // This wrapper's public URL.
       document.title = title;
 
       function versionSchema(actors) {
@@ -197,23 +196,28 @@
         const siteAddress = computed(() =>
           window.route.composeAddress(siteName, siteQuery.value)
         );
-        const editUrl = computed(() => {
-          const params = new URLSearchParams();
-          if (displayed.value && displayed.value.versionUrl === selectedVersion.value?.url) {
-            params.set("draft", displayed.value.html);
-          }
-          const returnUrl = new URL(hostedUrl);
-          if (siteQuery.value) returnUrl.hash = siteQuery.value;
-          params.set("redirect_route", returnUrl.href);
-          const address = window.route.composeAddress(
-            "e", window.route.composeQuery(params, siteAddress.value)
-          );
-          return `#/${address}`;
-        });
-
+        const editUrl = ref("");
+        const editError = ref("");
         const editButton = ref(null);
         const editDialog = ref(null);
-        function openEditDialog() { editDialog.value?.showModal(); }
+        function openEditDialog() {
+          editUrl.value = "";
+          editError.value = "";
+          try {
+            const params = new URLSearchParams();
+            if (displayed.value && displayed.value.versionUrl === selectedVersion.value?.url) {
+              params.set("draft", displayed.value.html);
+            }
+            params.set("redirect_route", window.urlFor(siteQuery.value || "?/"));
+            const address = window.route.composeAddress(
+              "e", window.route.composeQuery(params, siteAddress.value)
+            );
+            editUrl.value = `#/${address}`;
+          } catch {
+            editError.value = "Could not prepare the editor link. Please try again.";
+          }
+          editDialog.value?.showModal();
+        }
         function restoreFocus() { editButton.value?.focus(); }
         function closeEditDialogOnBackdrop(event) {
           const dialog = editDialog.value;
@@ -260,7 +264,7 @@
         return {
           accountBusy, accountError, accountMenu, changeAccount,
           closeEditDialogOnBackdrop, discoveryError,
-          displayed, editButton, editDialog, editUrl, adminVersion, admins,
+          displayed, editButton, editDialog, editUrl, editError, adminVersion, admins,
           isAdmin, isFirstPoll, mediaError, myVersion, newerAdminVersion, openEditDialog,
           restoreFocus, selectedVersion, session, siteName, siteQuery,
           viewportRoute,
@@ -346,9 +350,10 @@
             </p>
         </template>
         <p v-else>You're an admin so your edits will appear here for everyone.</p>
+        <p v-if="editError" role="alert">{{ editError }}</p>
         <footer class="dialog-actions">
           <form method="dialog"><button type="submit">Cancel</button></form>
-          <a class="primary-action" :href="editUrl">Continue to editor</a>
+          <a v-if="editUrl" class="primary-action" :href="editUrl">Continue to editor</a>
         </footer>
       </dialog>
     </template>
