@@ -78,6 +78,14 @@
       ];
       document.title = title;
 
+      // Forward the active site's page title through this meta-app. The
+      // outer Social.Wiki host already forwards this document's title.
+      function onChildMetadata(event) {
+        if (typeof event.detail?.title !== "string") return;
+        event.preventDefault();
+        document.title = event.detail.title.trim() || title;
+      }
+
       function versionSchema(actors) {
         return {
           properties: {
@@ -167,6 +175,7 @@
           const currentLoad = ++load;
           displayed.value = null;
           mediaError.value = "";
+          document.title = title;
           const version = selectedVersion.value;
           if (!version) return;
           try {
@@ -269,7 +278,7 @@
           isAdmin, isFirstPoll, mediaError, myVersion, newerAdminVersion, openEditDialog,
           restoreFocus, selectedVersion, session, siteName, siteQuery,
           viewportRoute,
-          viewingAdminVersion, title
+          viewingAdminVersion, title, onChildMetadata
         };
       }
 
@@ -337,7 +346,8 @@
         </section>
         <sw-transclude v-else :name="siteName" permission-scope="inherit"
           :srcdoc="displayed.html" :query="siteQuery" route=""
-          :autosize="viewportRoute ? 'off' : 'height'">
+          :autosize="viewportRoute ? 'off' : 'height'"
+          @sw-document-metadata="onChildMetadata">
         </sw-transclude>
       </main>
 
