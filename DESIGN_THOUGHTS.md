@@ -2,37 +2,12 @@
 
 These are ideas for the actual app itself, not the meta-app
 
-- Live conference chat:
-  - When opening it asks "Which talk are you currently at?"
-    - Options display paper title + room description
-    - Also an ongoing "Hallway track" option
-  - Choosing an option opens up an ongoing chat for that particular room.
-    - As sessions start and as paper talks begin, markers in the chat appear
-- Message other conference attendees
-  - Direct messages
-  - Group messages
-    - Use case: messaging a paper's authors, see below
-    - Use case: introducing someone (start a chat with 1-1 then leave?)
-- Find room feature?
-  - Should this be somehow integrated with the conference chat feature? That seems relevant.
-  - There is a map of the conference venue on the website
 - CSCW Meta
   - Meta Facebook group-like discussion platform, not live chat
   - People create new threads
   - Other people can reply to those threads.
-- Paper browsing discussion:
-  - Browse papers in the program (various sorts of search?)
-  - Comment on paper
-  - Authors can self-claim papers (this is my paper)
-  - People can message the authors (e.g. "Hi I loved your paper want to chat?")
-  - Bookmark a paper / add it to your schedule
-  - Recommend a paper to someone else
-    - "You should read this"
-    - They get a notification, and perhaps it goes to their schedule optionally
-    - This is similar to the Confer tool ("Confer: A Conference Recommendation and Meetup Tool" https://people.csail.mit.edu/axz/papers/demo_confer.pdf)
 - Dinner plans?
   - Help people find other people interested in getting dinner.
-- People create profiles, where they can describe themselves and make a photo.
 
 ## Assorted notes from past emails:
 

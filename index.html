@@ -257,6 +257,15 @@
 
         const accountBusy = ref(false);
         const accountError = ref("");
+        async function openPermissions() {
+          closeAccountMenu();
+          accountError.value = "";
+          try {
+            await window.showPermissions();
+          } catch (error) {
+            accountError.value = error.message || "Could not open permissions.";
+          }
+        }
         async function changeAccount() {
           if (accountBusy.value || session.value === undefined) return;
           accountBusy.value = true;
@@ -272,7 +281,7 @@
         }
 
         return {
-          accountBusy, accountError, accountMenu, changeAccount,
+          accountBusy, accountError, accountMenu, changeAccount, openPermissions,
           closeEditDialogOnBackdrop, discoveryError,
           displayed, editButton, editDialog, editUrl, editError, adminVersion, admins,
           isAdmin, isFirstPoll, mediaError, myVersion, newerAdminVersion, openEditDialog,
@@ -306,6 +315,9 @@
               </graffiti-actor-to-handle>
             </summary>
             <div class="account-menu-panel">
+              <button type="button" :disabled="accountBusy" @click="openPermissions">
+                Permissions
+              </button>
               <button type="button" :disabled="accountBusy" @click="changeAccount">
                 {{ accountBusy ? 'Logging out…' : 'Log out' }}
               </button>

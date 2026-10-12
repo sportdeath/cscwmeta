@@ -1,0 +1,1145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CSCW Meta — a community discussion and conference hub for CSCW.">
+  <title>CSCW Meta</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <script src="https://social.wiki/init.js"></script>
+  <style>
+    :root {
+      --pico-font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --pico-primary: #087f7a;
+      --pico-primary-hover: #066a66;
+      --pico-primary-focus: rgba(8, 127, 122, .24);
+      --pico-secondary: #40536d;
+      --ink: #17243b;
+      --muted: #647187;
+      --teal: #087f7a;
+      --teal-soft: #f6e8f5ff;
+      --coral: #df6b57;
+      --coral-soft: #fff0ec;
+      --paper: #ffffff;
+      --canvas: #f5f7fa;
+      --line: #dce3eb;
+      --shadow: 0 12px 30px rgba(23, 36, 59, .07);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--canvas); color: var(--ink); min-height: 100vh; }
+    body > #app { padding: 0; max-width: none; }
+    a { color: #066b68; }
+    button, [role="button"] { border-radius: .65rem; }
+    a[href], button:not([disabled]), [role="button"]:not([aria-disabled="true"]), summary { cursor: pointer; }
+    button.compact { padding: .42rem .72rem; font-size: .86rem; margin: 0; }
+    button.link-button { background: transparent; border: 0; color: var(--teal); padding: 0; margin: 0; text-align: left; box-shadow: none; }
+    button.link-button:hover { color: #055d59; text-decoration: underline; }
+    button.danger { color: #a43d31; border-color: #d9a098; }
+    button.danger:hover { background: var(--coral-soft); }
+    button.icon-action { display: inline-flex; align-items: center; gap: .35rem; background: transparent; border: 0; color: var(--muted); padding: .35rem .2rem; margin: 0; box-shadow: none; }
+    button.icon-action:hover { color: var(--teal); }
+    button.icon-action.active { color: var(--coral); font-weight: 700; }
+    button[disabled], [aria-disabled="true"] { cursor: not-allowed; }
+    input, select, textarea { background: #fff; }
+    textarea { resize: vertical; }
+    small, .muted { color: var(--muted); }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+    .loading-screen { min-height: 100vh; display: grid; place-items: center; text-align: center; }
+    .loading-mark { width: 3rem; height: 3rem; margin: 0 auto 1rem; border-radius: 50%; border: .3rem solid var(--teal-soft); border-top-color: var(--teal); animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .site-header { background: rgba(255, 255, 255, .96); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; backdrop-filter: blur(12px); }
+    .header-inner { max-width: 1180px; min-height: 4.6rem; margin: 0 auto; padding: .6rem 1.2rem; display: flex; align-items: center; gap: 1.2rem; }
+    .brand { display: flex; align-items: center; min-width: max-content; margin: 0; padding: .45rem 0; border: 0; background: transparent; color: var(--ink); text-decoration: none; box-shadow: none; }
+    .brand:hover { background: transparent; color: var(--teal); text-decoration: none; }
+    .brand strong { display: block; line-height: 1.05; font-size: 1.2rem; }
+    .nav-cluster { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1rem; flex: 1; }
+    .primary-nav { display: flex; align-items: center; justify-content: center; justify-self: center; gap: .25rem; }
+    .primary-nav button { background: transparent; border: 0; color: var(--muted); margin: 0; padding: .55rem .72rem; box-shadow: none; font-size: .9rem; }
+    .primary-nav button:hover, .primary-nav button.active { color: var(--ink); background: var(--teal-soft); }
+    .account { margin-left: 0; }
+    .account button { margin: 0; white-space: nowrap; }
+    .menu-toggle { display: none; width: 2.65rem; height: 2.45rem; margin: 0 0 0 auto; padding: .45rem .55rem; background: transparent; border-color: var(--line); box-shadow: none; }
+    .menu-toggle span { display: block; width: 100%; height: 2px; margin: .23rem 0; background: var(--ink); border-radius: 2px; }
+
+    .page-shell { max-width: 1180px; margin: 0 auto; padding: 2rem 1.2rem 4rem; }
+    .page-heading { margin-bottom: 1.5rem; }
+    .page-heading h1 { margin-bottom: .3rem; color: var(--ink); letter-spacing: -.025em; }
+    .page-heading p { margin: 0; color: var(--muted); max-width: 48rem; }
+    .home-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .home-heading h1 { margin: 0; }
+    .feed-layout { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; gap: 1.6rem; align-items: start; }
+    .stack { display: grid; gap: 1rem; }
+    .panel, article.card { background: var(--paper); border: 1px solid var(--line); border-radius: 1rem; box-shadow: var(--shadow); padding: 1.15rem; margin: 0; }
+    .panel h2, .panel h3, article.card h2, article.card h3 { color: var(--ink); }
+    .sidebar { display: grid; gap: 1rem; position: sticky; top: 6rem; }
+    .sidebar .panel { box-shadow: none; }
+    .sidebar h2 { font-size: 1rem; margin-bottom: .9rem; }
+    .sidebar-list { display: grid; gap: .85rem; }
+    .sidebar-date { display: grid; grid-template-columns: 2.7rem 1fr; gap: .7rem; align-items: start; }
+    .date-tile { border-radius: .65rem; background: var(--teal-soft); color: var(--teal); text-align: center; padding: .35rem .15rem; line-height: 1; }
+    .date-tile b { display: block; font-size: 1.05rem; }
+    .date-tile small { color: inherit; font-size: .62rem; text-transform: uppercase; }
+    .quick-links { display: grid; gap: .55rem; }
+
+    .composer { border-top: .28rem solid var(--teal); }
+    .composer h2 { font-size: 1.1rem; margin-bottom: .8rem; }
+    .composer-grid { display: grid; grid-template-columns: 1fr 13rem; gap: .8rem; }
+    .composer textarea { min-height: 7rem; }
+    .form-actions { display: flex; justify-content: flex-end; align-items: center; gap: .75rem; margin-top: .7rem; }
+    .form-actions button { margin: 0; }
+    .status-error { color: #a43d31; background: var(--coral-soft); border-radius: .55rem; padding: .55rem .7rem; font-size: .86rem; }
+    .status-success { color: #176b48; background: #e8f7ee; border-radius: .55rem; padding: .55rem .7rem; font-size: .86rem; }
+    .login-prompt { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .login-prompt p { margin: 0; color: var(--muted); }
+    .composer-dialog { width: min(46rem, calc(100vw - 1.5rem)); max-height: calc(100vh - 2rem); padding: 0; border: 0; border-radius: 1rem; box-shadow: 0 24px 80px rgba(23, 36, 59, .28); overflow-y: auto; }
+    .composer-dialog::backdrop { background: rgba(16, 28, 48, .56); backdrop-filter: blur(3px); }
+    .composer-dialog .composer { box-shadow: none; border: 0; border-top: .28rem solid var(--teal); padding: 1.4rem; }
+    .dialog-close { position: absolute; right: .8rem; top: .7rem; z-index: 2; width: 2rem; height: 2rem; padding: 0; margin: 0; border: 0; background: transparent; color: var(--muted); font-size: 1.45rem; line-height: 1; box-shadow: none; }
+
+    .feed-tools { display: flex; gap: .7rem; align-items: center; flex-wrap: wrap; }
+    .feed-tools input { flex: 1 1 15rem; margin: 0; }
+    .topic-chips { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .topic-chip { border: 1px solid var(--line); background: #fff; color: var(--muted); border-radius: 999px; padding: .35rem .65rem; margin: 0; font-size: .78rem; box-shadow: none; }
+    .topic-chip.active, .topic-chip:hover { border-color: var(--teal); background: var(--teal-soft); color: var(--teal); }
+    .section-kicker { color: var(--teal); font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .5rem; }
+    .featured { border-color: #b7ddd9; background: linear-gradient(135deg, #fff 50%, #f0fbf9); }
+
+    .post-card header, .comment header, .event-card header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: .65rem; }
+    .identity-line { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; font-size: .88rem; }
+    .organizer-badge, .official-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: .16rem .45rem; background: var(--teal-soft); color: var(--teal); font-size: .67rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+    .community-badge { background: #eef1f5; color: #5a6678; }
+    .topic-label { display: inline-block; color: #4d5f78; background: #eef2f7; border-radius: 999px; padding: .2rem .55rem; font-size: .72rem; }
+    .post-card h2 { font-size: 1.2rem; margin: .35rem 0 .55rem; }
+    .post-card h2 button { font: inherit; color: inherit; }
+    .post-body { white-space: pre-wrap; overflow-wrap: anywhere; color: #2e3d55; }
+    .post-link { display: inline-flex; align-items: center; gap: .35rem; max-width: 100%; margin-top: .25rem; overflow-wrap: anywhere; }
+    .post-actions { border-top: 1px solid var(--line); margin-top: .9rem; padding-top: .55rem; display: flex; align-items: center; gap: .9rem; flex-wrap: wrap; }
+    .post-actions .owner-actions { margin-left: auto; display: flex; gap: .65rem; }
+    .inline-editor { border-top: 1px dashed var(--line); margin-top: .8rem; padding-top: .8rem; }
+    .inline-editor textarea { min-height: 6rem; }
+    details.comments { margin-top: .8rem; border-top: 1px solid var(--line); padding-top: .7rem; }
+    details.comments > summary { color: var(--teal); font-weight: 700; font-size: .88rem; }
+    .comment-list { display: grid; gap: .7rem; margin-top: .8rem; }
+    .comment { border-left: .18rem solid #c9d4df; padding: .7rem .8rem; background: #f8fafc; border-radius: 0 .7rem .7rem 0; }
+    .comment p { margin-bottom: .4rem; white-space: pre-wrap; }
+    .comment-form { display: grid; grid-template-columns: 1fr auto; gap: .6rem; margin-top: .8rem; }
+    .comment-form textarea { margin: 0; min-height: 3.2rem; }
+    .comment-form button { align-self: end; margin: 0; }
+    .empty-state { text-align: center; color: var(--muted); padding: 2rem 1rem; }
+
+    .program-toolbar { display: grid; grid-template-columns: 12rem 1fr; gap: .8rem; margin-bottom: 1rem; }
+    .program-toolbar select, .program-toolbar input { margin: 0; }
+    .notice { border-left: .28rem solid var(--coral); background: var(--coral-soft); padding: .8rem 1rem; border-radius: 0 .75rem .75rem 0; margin-bottom: 1rem; }
+    .notice p { margin: 0; }
+    .session-card { box-shadow: none !important; }
+    .session-meta { display: flex; gap: .75rem; flex-wrap: wrap; color: var(--muted); font-size: .82rem; margin-bottom: .7rem; }
+    .paper-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .55rem; }
+    .paper-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: .72rem 0; border-top: 1px solid var(--line); }
+    .paper-row:first-child { border-top: 0; }
+    .paper-title { font-weight: 750; color: var(--ink); }
+    .paper-authors { font-size: .78rem; color: var(--muted); margin-top: .2rem; }
+    .discussion-count { min-width: max-content; color: var(--teal); font-size: .76rem; font-weight: 700; }
+    .paper-detail { max-width: 820px; margin: 0 auto; }
+    .paper-detail .abstract { line-height: 1.7; }
+    .back-button { margin-bottom: 1rem; }
+
+    .calendar-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    .calendar-toolbar h2 { margin: 0; font-size: 1.2rem; }
+    .calendar-nav { display: flex; gap: .4rem; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--line); border-radius: .9rem; overflow: hidden; background: #fff; }
+    .calendar-grid > div { min-height: 6.2rem; padding: .45rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .calendar-grid > div:nth-child(7n) { border-right: 0; }
+    .weekday { min-height: auto !important; background: #eef3f7; color: var(--muted); font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+    .day-cell.other-month { background: #f8fafc; color: #9aa5b4; }
+    .day-number { font-size: .78rem; font-weight: 750; }
+    .calendar-event { display: block; width: 100%; margin: .25rem 0 0; padding: .25rem .32rem; border: 0; border-radius: .35rem; background: var(--teal-soft); color: #075f5b; text-align: left; font-size: .66rem; line-height: 1.25; box-shadow: none; overflow: hidden; text-overflow: ellipsis; }
+    .calendar-event.community { background: #eef1f5; color: #46546a; }
+    .calendar-layout { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; gap: 1.4rem; align-items: start; }
+    .event-list { display: grid; gap: .75rem; }
+    .event-card { box-shadow: none !important; padding: .9rem !important; }
+    .event-card h3 { font-size: 1rem; margin: 0 0 .25rem; }
+    .event-date { color: var(--teal); font-weight: 750; font-size: .83rem; }
+    .event-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+    .event-form-grid .wide { grid-column: 1 / -1; }
+    details.add-event summary { font-weight: 750; color: var(--teal); }
+
+    .conference-current { padding: 1.4rem; background: linear-gradient(135deg, var(--ink), #274b62); color: #fff; border-radius: 1rem; margin-bottom: 1.3rem; }
+    .conference-current h2, .conference-current p { color: #fff; }
+    .conference-current a { color: #b8f0ea; }
+    .conference-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .conference-card { box-shadow: none !important; }
+    .conference-card .year { font-size: 1.55rem; font-weight: 800; color: var(--teal); }
+    .resource-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; margin-top: 1.2rem; }
+
+    .moderation-item { border-left: .25rem solid var(--coral); }
+    .reason { font-weight: 750; text-transform: capitalize; }
+    .toast-region { position: fixed; right: 1rem; bottom: 1rem; z-index: 40; width: min(23rem, calc(100vw - 2rem)); }
+    .toast { background: var(--ink); color: #fff; border-radius: .75rem; box-shadow: 0 15px 40px rgba(0,0,0,.2); padding: .8rem 1rem; }
+
+    @media (max-width: 900px) {
+      .feed-layout, .calendar-layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; grid-template-columns: 1fr 1fr; }
+      .conference-grid { grid-template-columns: repeat(2, 1fr); }
+      .calendar-grid > div { min-height: 5rem; }
+    }
+
+    @media (max-width: 700px) {
+      .header-inner { min-height: 4rem; flex-wrap: wrap; gap: .5rem; }
+      .menu-toggle { display: block; }
+      .nav-cluster { display: none; order: 3; width: 100%; flex: none; align-items: stretch; padding: .35rem 0 .7rem; border-top: 1px solid var(--line); }
+      .nav-cluster.open { display: flex; flex-direction: column; align-items: center; gap: .55rem; }
+      .primary-nav { width: auto; flex-direction: column; align-items: center; gap: .15rem; }
+      .primary-nav button { width: auto; min-width: 10rem; text-align: center; padding: .7rem .8rem; }
+      .account { width: 100%; margin: 0; padding: .55rem .8rem 0; border-top: 1px solid var(--line); }
+      .account > div, .account .identity-line { width: 100%; }
+      .account .identity-line { justify-content: center; }
+    }
+
+    @media (max-width: 600px) {
+      .page-shell { padding: 1.25rem .75rem 3rem; }
+      .header-inner { padding-inline: .75rem; }
+      .composer-grid, .program-toolbar, .event-form-grid { grid-template-columns: 1fr; }
+      .home-heading { align-items: stretch; flex-direction: column; }
+      .home-heading button { width: 100%; }
+      .event-form-grid .wide { grid-column: auto; }
+      .sidebar, .conference-grid, .resource-grid { grid-template-columns: 1fr; }
+      .post-actions .owner-actions { width: 100%; margin-left: 0; }
+      .comment-form { grid-template-columns: 1fr; }
+      .calendar-grid > div { min-height: 3.8rem; padding: .25rem; }
+      .calendar-event { font-size: 0; height: .45rem; padding: 0; }
+      .paper-row { display: block; }
+      .discussion-count { display: block; margin-top: .35rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">Loading CSCW Meta…</div>
+
+  <template id="app-template">
+    <div v-if="session === undefined" class="loading-screen" aria-live="polite">
+      <div><div class="loading-mark" aria-hidden="true"></div><strong>Loading CSCW Meta…</strong></div>
+    </div>
+    <div v-else>
+      <header class="site-header">
+        <div class="header-inner">
+          <button type="button" class="brand" @click="go('home')" aria-label="CSCW Meta home"><strong>CSCW Meta</strong></button>
+          <button class="menu-toggle" type="button" :aria-label="mobileMenuOpen ? 'Close menu' : 'Open menu'" aria-controls="site-menu" :aria-expanded="mobileMenuOpen" @click="mobileMenuOpen = !mobileMenuOpen"><span></span><span></span><span></span></button>
+          <div id="site-menu" class="nav-cluster" :class="{ open: mobileMenuOpen }">
+            <nav class="primary-nav" aria-label="Primary navigation">
+              <button :class="{ active: currentView === 'home' || currentView === 'post' }" @click="go('home')">Home</button>
+              <button :class="{ active: currentView === 'program' || currentView === 'paper' }" @click="go('program')">Program</button>
+              <button :class="{ active: currentView === 'calendar' }" @click="go('calendar')">Calendar</button>
+              <button :class="{ active: currentView === 'conferences' }" @click="go('conferences')">Conferences</button>
+              <button v-if="isOrganizer" :class="{ active: currentView === 'moderation' }" @click="go('moderation')">Moderation</button>
+            </nav>
+            <login-control class="account"></login-control>
+          </div>
+        </div>
+      </header>
+
+      <main class="page-shell">
+        <feed-view
+          v-if="currentView === 'home'"
+          :objects="publicObjects"
+          :loading="isFirstPoll"
+          :organizer-actors="organizerActors"
+          @open-post="openPost"
+        ></feed-view>
+
+        <post-view
+          v-else-if="currentView === 'post'"
+          :url="routeParams.get('post') || ''"
+          :objects="publicObjects"
+          :organizer-actors="organizerActors"
+          @back="navigate('home')"
+        ></post-view>
+
+        <program-view
+          v-else-if="currentView === 'program'"
+          :objects="publicObjects"
+          :initial-year="routeParams.get('year')"
+          @open-paper="openPaper"
+          @year-change="setYear"
+        ></program-view>
+
+        <paper-view
+          v-else-if="currentView === 'paper'"
+          :year="Number(routeParams.get('year'))"
+          :content-id="Number(routeParams.get('paper'))"
+          :objects="publicObjects"
+          :organizer-actors="organizerActors"
+          @back="navigate('program', { year: routeParams.get('year') })"
+        ></paper-view>
+
+        <calendar-view
+          v-else-if="currentView === 'calendar'"
+          :objects="publicObjects"
+        ></calendar-view>
+
+        <conferences-view v-else-if="currentView === 'conferences'"></conferences-view>
+
+        <moderation-view
+          v-else-if="currentView === 'moderation' && isOrganizer"
+          :public-objects="publicObjects"
+          :organizer-actors="organizerActors"
+        ></moderation-view>
+
+        <section v-else class="empty-state panel">
+          <h1>Page not found</h1>
+          <button @click="navigate('home')">Return home</button>
+        </section>
+      </main>
+
+      <div class="toast-region" aria-live="polite" aria-atomic="true">
+        <div v-if="toast" class="toast">{{ toast }}</div>
+      </div>
+    </div>
+  </template>
+
+  <template id="login-control-template">
+    <div>
+      <span v-if="session === undefined" class="muted">Loading…</span>
+      <button v-else-if="session === null" class="compact" :disabled="busy" @click="logIn">{{ busy ? 'Opening…' : 'Log in' }}</button>
+      <div v-else class="identity-line">
+        <span class="handle"><graffiti-actor-to-handle :actor="session.actor"></graffiti-actor-to-handle></span>
+        <button class="outline secondary compact" :disabled="busy" @click="logOut">{{ busy ? 'Logging out…' : 'Log out' }}</button>
+      </div>
+      <small v-if="error" class="status-error">{{ error }}</small>
+    </div>
+  </template>
+
+  <template id="feed-view-template">
+    <section>
+      <div class="page-heading home-heading">
+        <h1>CSCW conversations.</h1>
+        <button type="button" @click="openComposer">Start a discussion</button>
+      </div>
+      <dialog ref="composerDialog" class="composer-dialog" @click.self="closeComposer" @close="composerOpen = false">
+        <button type="button" class="dialog-close" aria-label="Close" @click="closeComposer">×</button>
+        <post-composer @posted="closeComposer"></post-composer>
+      </dialog>
+      <div class="feed-layout">
+        <div class="stack">
+          <div class="panel feed-tools">
+            <label class="sr-only" for="feed-search">Search discussions</label>
+            <input id="feed-search" v-model.trim="search" type="search" placeholder="Search discussions">
+            <div class="topic-chips" aria-label="Filter by topic">
+              <button v-for="topic in topics" :key="topic" class="topic-chip" :class="{ active: selectedTopic === topic }" @click="selectedTopic = topic">{{ topic }}</button>
+            </div>
+          </div>
+
+          <section v-if="featured.length" aria-labelledby="organizer-updates">
+            <div id="organizer-updates" class="section-kicker">Organizer updates</div>
+            <div class="stack">
+              <post-card v-for="post in featured" :key="post.url" :post="post" :objects="objects" :organizer-actors="organizerActors" featured @open="$emit('open-post', post.url)"></post-card>
+            </div>
+          </section>
+
+          <div v-if="loading" class="panel empty-state" aria-live="polite">Loading discussions…</div>
+          <div v-else-if="filteredPosts.length" class="stack">
+            <post-card v-for="post in filteredPosts" :key="post.url" :post="post" :objects="objects" :organizer-actors="organizerActors" @open="$emit('open-post', post.url)"></post-card>
+          </div>
+          <div v-else class="panel empty-state">
+            <h2>No discussions found</h2>
+            <p>{{ search || selectedTopic !== 'All' ? 'Try another search or topic.' : 'Start the first conversation.' }}</p>
+          </div>
+        </div>
+
+        <aside class="sidebar" aria-label="Community resources">
+          <section class="panel">
+            <h2>Upcoming CSCW dates</h2>
+            <div class="sidebar-list">
+              <div v-for="event in officialEvents" :key="event.url" class="sidebar-date">
+                <div class="date-tile"><small>{{ month(event.value.startTime) }}</small><b>{{ day(event.value.startTime) }}</b></div>
+                <div><strong>{{ event.value.name }}</strong><br><small>{{ event.value.timeZone }}</small></div>
+              </div>
+            </div>
+          </section>
+          <section class="panel">
+            <h2>Quick links</h2>
+            <div class="quick-links">
+              <a href="https://cscw.acm.org/2026/" target="_blank" rel="noopener noreferrer">CSCW 2026</a>
+              <a href="https://cscw.acm.org/2026/registration.html" target="_blank" rel="noopener noreferrer">Registration</a>
+              <a href="https://cscw.acm.org/2026/codeofconduct.html" target="_blank" rel="noopener noreferrer">Code of conduct</a>
+              <a href="https://programs.sigchi.org/cscw/2025" target="_blank" rel="noopener noreferrer">SIGCHI program</a>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </template>
+
+  <template id="post-composer-template">
+    <section class="panel composer" aria-labelledby="new-post-title">
+      <template v-if="session">
+        <h2 id="new-post-title">Start a discussion</h2>
+        <form @submit.prevent="submit">
+          <div class="composer-grid">
+            <label>Title<input v-model.trim="name" maxlength="160" required placeholder="What would you like to discuss?"></label>
+            <label>Topic<select v-model="topic" required><option v-for="option in topicOptions" :key="option">{{ option }}</option></select></label>
+          </div>
+          <label>Post<textarea v-model.trim="content" maxlength="8000" required placeholder="Share a question, idea, opportunity, or update…"></textarea></label>
+          <label>Link <small>(optional)</small><input v-model.trim="link" type="url" placeholder="https://…"></label>
+          <div v-if="error" class="status-error" role="alert">{{ error }}</div>
+          <div v-if="success" class="status-success">Posted.</div>
+          <div class="form-actions"><button type="submit" :disabled="busy || !name || !content">{{ busy ? 'Posting…' : 'Post discussion' }}</button></div>
+        </form>
+      </template>
+      <div v-else class="login-prompt">
+        <p>Log in to join the conversation.</p>
+        <button class="compact" :disabled="busy" @click="logIn">{{ busy ? 'Opening…' : 'Log in to post' }}</button>
+      </div>
+    </section>
+  </template>
+
+  <template id="post-card-template">
+    <article class="card post-card" :class="{ featured }">
+      <header>
+        <div class="identity-line">
+          <strong><graffiti-actor-to-handle :actor="post.actor"></graffiti-actor-to-handle></strong>
+          <span v-if="isPostOrganizer" class="organizer-badge">Organizer</span>
+          <span class="topic-label">{{ value.topic }}</span>
+        </div>
+        <small :title="value.published">{{ formatDate(value.published) }}</small>
+      </header>
+      <h2><button class="link-button" @click="$emit('open')">{{ value.name }}</button></h2>
+      <p class="post-body">{{ value.content }}</p>
+      <a v-if="safeLink" class="post-link" :href="safeLink" target="_blank" rel="noopener noreferrer">↗ {{ linkLabel }}</a>
+
+      <div v-if="editing" class="inline-editor">
+        <form @submit.prevent="saveEdit">
+          <label>Title<input v-model.trim="editName" maxlength="160" required></label>
+          <label>Post<textarea v-model.trim="editContent" maxlength="8000" required></textarea></label>
+          <div class="composer-grid">
+            <label>Topic<select v-model="editTopic"><option v-for="option in topicOptions" :key="option">{{ option }}</option></select></label>
+            <label>Link<input v-model.trim="editLink" type="url" placeholder="https://…"></label>
+          </div>
+          <div v-if="error" class="status-error" role="alert">{{ error }}</div>
+          <div class="form-actions"><button type="button" class="outline secondary" :disabled="busy" @click="editing = false">Cancel</button><button type="submit" :disabled="busy">{{ busy ? 'Saving…' : 'Save changes' }}</button></div>
+        </form>
+      </div>
+
+      <div class="post-actions">
+        <button class="icon-action" :class="{ active: likedByMe }" :disabled="busy || !session" @click="toggleLike" :aria-pressed="likedByMe">♥ {{ likeCount || 'Like' }}</button>
+        <button class="icon-action" @click="commentsOpen = !commentsOpen">◯ {{ comments.length }} {{ comments.length === 1 ? 'comment' : 'comments' }}</button>
+        <button v-if="session && canReport" class="icon-action" :disabled="busy" @click="reportOpen = !reportOpen">Report</button>
+        <span class="owner-actions">
+          <button v-if="isOwner" class="icon-action" @click="beginEdit">Edit</button>
+          <button v-if="isOwner" class="icon-action" :disabled="busy" @click="removePost">Delete</button>
+          <button v-if="isOrganizer && !isOwner" class="icon-action danger" :disabled="busy" @click="hidePost">Hide</button>
+        </span>
+      </div>
+
+      <div v-if="reportOpen" class="inline-editor">
+        <form @submit.prevent="submitReport">
+          <div class="composer-grid">
+            <label>Reason<select v-model="reportReason"><option value="spam">Spam</option><option value="harassment">Harassment</option><option value="off-topic">Off-topic</option><option value="other">Other</option></select></label>
+            <label>Details <small>(optional)</small><input v-model.trim="reportDetails" maxlength="500"></label>
+          </div>
+          <div class="form-actions"><button type="button" class="outline secondary compact" @click="reportOpen = false">Cancel</button><button class="compact" type="submit" :disabled="busy">{{ busy ? 'Sending…' : 'Send report' }}</button></div>
+        </form>
+      </div>
+      <div v-if="error && !editing" class="status-error" role="alert">{{ error }}</div>
+
+      <discussion-thread v-if="commentsOpen" :target="post.url" :context="post.url" :objects="objects" :organizer-actors="organizerActors"></discussion-thread>
+    </article>
+  </template>
+
+  <template id="discussion-thread-template">
+    <section class="comments" aria-label="Comments">
+      <div v-if="comments.length" class="comment-list">
+        <article v-for="comment in comments" :key="comment.url" class="comment">
+          <header>
+            <div class="identity-line"><strong><graffiti-actor-to-handle :actor="comment.actor"></graffiti-actor-to-handle></strong><span v-if="organizerActors.includes(comment.actor)" class="organizer-badge">Organizer</span></div>
+            <small>{{ formatDate(comment.value.published) }}</small>
+          </header>
+          <template v-if="editingUrl === comment.url">
+            <form @submit.prevent="saveComment(comment)">
+              <textarea v-model.trim="editText" required maxlength="4000"></textarea>
+              <div class="form-actions"><button type="button" class="outline secondary compact" @click="editingUrl = ''">Cancel</button><button class="compact" :disabled="busy">{{ busy ? 'Saving…' : 'Save' }}</button></div>
+            </form>
+          </template>
+          <template v-else>
+            <p>{{ comment.value.content }}</p>
+            <div class="identity-line">
+              <button v-if="session && session.actor === comment.actor" class="icon-action" @click="editComment(comment)">Edit</button>
+              <button v-if="session && session.actor === comment.actor" class="icon-action" :disabled="busy" @click="deleteComment(comment)">Delete</button>
+              <button v-if="session && organizerActors.includes(session.actor) && session.actor !== comment.actor" class="icon-action danger" :disabled="busy" @click="hideComment(comment)">Hide</button>
+            </div>
+          </template>
+        </article>
+      </div>
+      <p v-else class="muted">No comments yet.</p>
+
+      <form v-if="session" class="comment-form" @submit.prevent="addComment">
+        <label class="sr-only" :for="formId">Add a comment</label>
+        <textarea :id="formId" v-model.trim="text" maxlength="4000" required placeholder="Add a comment…"></textarea>
+        <button class="compact" type="submit" :disabled="busy || !text">{{ busy ? 'Posting…' : 'Comment' }}</button>
+      </form>
+      <p v-else class="muted">Log in to comment.</p>
+      <div v-if="error" class="status-error" role="alert">{{ error }}</div>
+    </section>
+  </template>
+
+  <template id="post-view-template">
+    <section>
+      <button class="outline secondary compact back-button" @click="$emit('back')">← Back to discussions</button>
+      <graffiti-get v-if="url" :url="url" :schema="postSchema" v-slot="{ object }">
+        <div v-if="object === undefined" class="panel empty-state">Loading discussion…</div>
+        <post-card v-else-if="resolvedPost(object)" :post="resolvedPost(object)" :objects="objects" :organizer-actors="organizerActors" featured></post-card>
+        <div v-else class="panel empty-state"><h1>Discussion unavailable</h1><p>It may have been deleted or hidden.</p></div>
+      </graffiti-get>
+      <div v-else class="panel empty-state">No discussion selected.</div>
+    </section>
+  </template>
+
+  <template id="program-view-template">
+    <section>
+      <div class="page-heading"><h1>Conference program</h1><p>Browse sessions and continue the conversation around CSCW papers.</p></div>
+      <div v-if="loading" class="panel empty-state" aria-live="polite">Loading the SIGCHI program…</div>
+      <template v-else>
+        <div v-if="!has2026" class="notice"><p><strong>CSCW 2026 program coming soon.</strong> The 2025 program is available below. <a href="https://cscw.acm.org/2026/" target="_blank" rel="noopener noreferrer">Visit the official 2026 site</a>.</p></div>
+        <div v-if="error" class="notice"><p>{{ error }} <a href="https://programs.sigchi.org/" target="_blank" rel="noopener noreferrer">Open the official SIGCHI program</a>.</p></div>
+        <template v-if="program">
+          <div class="program-toolbar">
+            <label class="sr-only" for="program-year">Conference year</label>
+            <select id="program-year" v-model.number="selectedYear" @change="changeYear"><option v-for="year in availableYears" :key="year" :value="year">CSCW {{ year }}</option></select>
+            <label class="sr-only" for="paper-search">Search papers and sessions</label>
+            <input id="paper-search" v-model.trim="search" type="search" placeholder="Search papers, authors, or sessions">
+          </div>
+          <div v-if="filteredSessions.length" class="stack">
+            <article v-for="sessionItem in filteredSessions" :key="sessionItem.id" class="card session-card">
+              <h2>{{ sessionItem.name }}</h2>
+              <div class="session-meta"><span>{{ sessionDate(sessionItem) }}</span><span v-if="roomName(sessionItem.roomId)">{{ roomName(sessionItem.roomId) }}</span></div>
+              <ul class="paper-list">
+                <li v-for="paper in papersForSession(sessionItem)" :key="paper.id" class="paper-row">
+                  <div><button class="link-button paper-title" @click="openPaper(paper, sessionItem)">{{ paper.title }}</button><div class="paper-authors">{{ authorNames(paper) }}</div></div>
+                  <span class="discussion-count">{{ discussionCount(paper.id) }} {{ discussionCount(paper.id) === 1 ? 'comment' : 'comments' }}</span>
+                </li>
+              </ul>
+            </article>
+          </div>
+          <div v-else class="panel empty-state">No papers match your search.</div>
+        </template>
+      </template>
+    </section>
+  </template>
+
+  <template id="paper-view-template">
+    <section class="paper-detail">
+      <button class="outline secondary compact back-button" @click="$emit('back')">← Back to program</button>
+      <div v-if="loading" class="panel empty-state">Loading paper…</div>
+      <div v-else-if="error || !paper" class="panel empty-state"><h1>Paper unavailable</h1><p>{{ error || 'This paper could not be found in the official program.' }}</p></div>
+      <template v-else>
+        <article class="card">
+          <div class="section-kicker">CSCW {{ year }} · {{ session?.name || 'Program' }}</div>
+          <h1>{{ paper.title }}</h1>
+          <p class="muted">{{ authorNames }}</p>
+          <div v-if="session" class="session-meta"><span>{{ sessionDate }}</span><span v-if="roomName">{{ roomName }}</span></div>
+          <p v-if="paper.abstract" class="abstract">{{ paper.abstract }}</p>
+          <a :href="officialProgramUrl" target="_blank" rel="noopener noreferrer">View in the official program ↗</a>
+        </article>
+        <section class="panel" style="margin-top:1rem">
+          <h2>Discuss this paper</h2>
+          <discussion-thread :target="paperKey" :context="paperKey" :objects="objects" :organizer-actors="organizerActors"></discussion-thread>
+        </section>
+      </template>
+    </section>
+  </template>
+
+  <template id="calendar-view-template">
+    <section>
+      <div class="page-heading"><h1>CSCW calendar</h1><p>Conference dates, deadlines, workshops, and community events.</p></div>
+      <div class="calendar-layout">
+        <div class="stack">
+          <section class="panel">
+            <div class="calendar-toolbar">
+              <div class="calendar-nav"><button class="outline secondary compact" aria-label="Previous month" @click="shiftMonth(-1)">←</button><button class="outline secondary compact" aria-label="Next month" @click="shiftMonth(1)">→</button></div>
+              <h2>{{ monthLabel }}</h2>
+              <button class="outline secondary compact" @click="goToday">Today</button>
+            </div>
+            <div class="calendar-grid" role="grid" :aria-label="monthLabel">
+              <div v-for="weekday in weekdays" :key="weekday" class="weekday" role="columnheader">{{ weekday }}</div>
+              <div v-for="dayItem in calendarDays" :key="dayItem.key" class="day-cell" :class="{ 'other-month': !dayItem.current }" role="gridcell">
+                <span class="day-number">{{ dayItem.day }}</span>
+                <button v-for="event in eventsOn(dayItem.key).slice(0, 3)" :key="event.url" class="calendar-event" :class="{ community: !event.official }" :title="event.value.name" @click="selectedEvent = event">{{ event.value.name }}</button>
+              </div>
+            </div>
+          </section>
+
+          <details class="panel add-event">
+            <summary>Add a community date</summary>
+            <event-form @created="eventCreated"></event-form>
+          </details>
+        </div>
+
+        <aside class="stack">
+          <section class="panel">
+            <h2>Upcoming</h2>
+            <div v-if="upcoming.length" class="event-list">
+              <event-card v-for="event in upcoming.slice(0, 8)" :key="event.url" :event="event" @select="selectedEvent = event"></event-card>
+            </div>
+            <p v-else class="muted">No upcoming dates.</p>
+          </section>
+          <event-card v-if="selectedEvent" :event="selectedEvent" detailed @close="selectedEvent = null"></event-card>
+        </aside>
+      </div>
+    </section>
+  </template>
+
+  <template id="event-form-template">
+    <form style="margin-top:1rem" @submit.prevent="submit">
+      <div class="event-form-grid">
+        <label class="wide">Title<input v-model.trim="name" maxlength="160" required placeholder="Event or deadline"></label>
+        <label>Date<input v-model="date" type="date" required></label>
+        <label>End date <small>(optional)</small><input v-model="endDate" type="date" :min="date"></label>
+        <label>Category<select v-model="category"><option>Conference</option><option>Deadline</option><option>Workshop</option><option>Community</option></select></label>
+        <label>Time zone<select v-model="timeZone"><option>AoE</option><option>UTC</option><option :value="localZone">{{ localZone }}</option></select></label>
+        <label class="wide">Details <small>(optional)</small><textarea v-model.trim="content" maxlength="2000"></textarea></label>
+        <label>Location <small>(optional)</small><input v-model.trim="location" maxlength="160"></label>
+        <label>Link <small>(optional)</small><input v-model.trim="link" type="url" placeholder="https://…"></label>
+      </div>
+      <div v-if="error" class="status-error" role="alert">{{ error }}</div>
+      <div class="form-actions"><button v-if="!session" type="button" :disabled="busy" @click="logIn">Log in to add</button><button v-else type="submit" :disabled="busy || !name || !date">{{ busy ? 'Adding…' : 'Add to calendar' }}</button></div>
+    </form>
+  </template>
+
+  <template id="event-card-template">
+    <article class="card event-card">
+      <header><div><span :class="event.official ? 'official-badge' : 'official-badge community-badge'">{{ event.official ? 'Official' : 'Community' }}</span><h3>{{ event.value.name }}</h3></div><button v-if="detailed" class="link-button" aria-label="Close event details" @click="$emit('close')">×</button></header>
+      <div class="event-date">{{ eventDate }}</div>
+      <p v-if="detailed && event.value.content">{{ event.value.content }}</p>
+      <p v-if="detailed && event.value.location" class="muted">{{ event.value.location }}</p>
+      <a v-if="safeLink" :href="safeLink" target="_blank" rel="noopener noreferrer">Event details ↗</a>
+      <div v-if="!event.official && isOwner" class="identity-line" style="margin-top:.5rem"><button class="icon-action" @click="editing = !editing">Edit</button><button class="icon-action" :disabled="busy" @click="remove">Delete</button></div>
+      <form v-if="editing" class="inline-editor" @submit.prevent="save">
+        <label>Title<input v-model.trim="editName" maxlength="160" required></label>
+        <div class="event-form-grid"><label>Date<input v-model="editDate" type="date" required></label><label>Category<select v-model="editCategory"><option>Conference</option><option>Deadline</option><option>Workshop</option><option>Community</option></select></label></div>
+        <label>Details<textarea v-model.trim="editContent" maxlength="2000"></textarea></label>
+        <div class="form-actions"><button type="button" class="outline secondary compact" @click="editing = false">Cancel</button><button class="compact" :disabled="busy">{{ busy ? 'Saving…' : 'Save' }}</button></div>
+      </form>
+      <div v-if="error" class="status-error">{{ error }}</div>
+    </article>
+  </template>
+
+  <template id="conferences-view-template">
+    <section>
+      <div class="page-heading"><h1>CSCW conferences</h1><p>Current information and an archive of past conference websites.</p></div>
+      <section class="conference-current">
+        <div class="section-kicker" style="color:#8fe1d8">Next conference</div>
+        <h2>CSCW 2026 · Salt Lake City</h2>
+        <p>October 10–14, 2026 · Online event October 1–2</p>
+        <a href="https://cscw.acm.org/2026/" target="_blank" rel="noopener noreferrer">Visit the official conference site ↗</a>
+      </section>
+      <div class="conference-grid">
+        <article v-for="conference in conferences" :key="conference.year" class="card conference-card"><div class="year">{{ conference.year }}</div><p>{{ conference.label }}</p><a :href="conference.url" target="_blank" rel="noopener noreferrer">Conference website ↗</a></article>
+      </div>
+      <div class="resource-grid">
+        <article class="panel"><h2>Attend CSCW 2026</h2><div class="quick-links"><a href="https://cscw.acm.org/2026/registration.html" target="_blank" rel="noopener noreferrer">Registration</a><a href="https://cscw.acm.org/2026/online.html" target="_blank" rel="noopener noreferrer">Online experience</a><a href="https://cscw.acm.org/2026/accessibility.html" target="_blank" rel="noopener noreferrer">Accessibility</a></div></article>
+        <article class="panel"><h2>Community resources</h2><div class="quick-links"><a href="https://cscw.acm.org/2026/codeofconduct.html" target="_blank" rel="noopener noreferrer">Code of conduct</a><a href="https://programs.sigchi.org/" target="_blank" rel="noopener noreferrer">SIGCHI conference programs</a><a href="https://dl.acm.org/conference/cscw" target="_blank" rel="noopener noreferrer">CSCW in the ACM Digital Library</a></div></article>
+      </div>
+    </section>
+  </template>
+
+  <template id="moderation-view-template">
+    <section>
+      <div class="page-heading"><h1>Moderation</h1><p>Review reports from CSCW Meta members.</p></div>
+      <div v-if="isFirstPoll" class="panel empty-state">Loading reports…</div>
+      <div v-else-if="activeFlags.length" class="stack">
+        <article v-for="flag in activeFlags" :key="flag.url" class="card moderation-item">
+          <header><div><span class="reason">{{ flag.value.reason }}</span><br><small>Reported by <graffiti-actor-to-handle :actor="flag.actor"></graffiti-actor-to-handle></small></div><small>{{ formatDate(flag.value.published) }}</small></header>
+          <p v-if="flag.value.content">{{ flag.value.content }}</p>
+          <p><strong>Reported content:</strong> {{ contentPreview(flag.value.object) }}</p>
+          <div class="form-actions"><button class="outline secondary" :disabled="busyUrl === flag.url" @click="resolve(flag, 'dismissed')">Dismiss</button><button class="danger outline" :disabled="busyUrl === flag.url" @click="resolve(flag, 'hidden')">Hide content</button></div>
+        </article>
+      </div>
+      <div v-else class="panel empty-state"><h2>All clear</h2><p>There are no open reports.</p></div>
+      <div v-if="error" class="status-error" role="alert">{{ error }}</div>
+      <button class="outline secondary compact" style="margin-top:1rem" @click="poll">Refresh reports</button>
+    </section>
+  </template>
+
+  <script type="module">
+    import { createApp, ref, computed, watch, onMounted } from "vue";
+    import { GraffitiPlugin, useGraffiti, useGraffitiSession, useGraffitiDiscover } from "@graffiti-garden/wrapper-vue";
+
+    const CHANNELS = Object.freeze({
+      public: "cscw-meta:v1:public",
+      posts: "cscw-meta:v1:posts",
+      events: "cscw-meta:v1:events",
+      moderation: "cscw-meta:v1:moderation",
+    });
+
+    // Add immutable Graffiti actor URIs here before enabling the organizer pilot.
+    const ORGANIZER_ACTORS = Object.freeze([]);
+    const TOPICS = Object.freeze(["General", "Research", "Jobs & Opportunities", "Events", "Community Help"]);
+    const PROGRAM_LIST_URL = "https://files.sigchi.org/conference/cache/program-list";
+    const PROGRAM_CACHE = new Map();
+    let programListPromise;
+
+    const objectShell = (valueSchema) => ({
+      type: "object",
+      properties: {
+        value: valueSchema,
+        channels: { type: "array", items: { type: "string" } },
+        actor: { type: "string" },
+        url: { type: "string" },
+      },
+      required: ["value", "channels", "actor", "url"],
+    });
+
+    const postValueSchema = {
+      type: "object",
+      properties: {
+        type: { const: "Note" }, name: { type: "string" }, content: { type: "string" },
+        topic: { enum: TOPICS }, published: { type: "string" }, url: { type: "string" },
+      },
+      required: ["type", "name", "content", "topic", "published"],
+    };
+    const commentValueSchema = {
+      type: "object",
+      properties: {
+        type: { const: "Note" }, content: { type: "string" }, context: { type: "string" },
+        inReplyTo: { type: "string" }, published: { type: "string" },
+      },
+      required: ["type", "content", "context", "inReplyTo", "published"],
+    };
+    const likeValueSchema = {
+      type: "object",
+      properties: { type: { const: "Like" }, object: { type: "string" }, published: { type: "string" } },
+      required: ["type", "object", "published"],
+    };
+    const eventValueSchema = {
+      type: "object",
+      properties: {
+        type: { const: "Event" }, name: { type: "string" }, startTime: { type: "string" },
+        endTime: { type: "string" }, category: { type: "string" }, allDay: { type: "boolean" },
+        timeZone: { type: "string" }, published: { type: "string" }, content: { type: "string" },
+        location: { type: "string" }, url: { type: "string" },
+      },
+      required: ["type", "name", "startTime", "category", "allDay", "timeZone", "published"],
+    };
+    const updateValueSchema = {
+      type: "object",
+      properties: { activity: { const: "Update" }, object: { type: "string" }, changes: { type: "object" }, published: { type: "string" } },
+      required: ["activity", "object", "changes", "published"],
+    };
+    const removeValueSchema = {
+      type: "object",
+      properties: { activity: { const: "Remove" }, object: { type: "string" }, reason: { type: "string" }, published: { type: "string" } },
+      required: ["activity", "object", "reason", "published"],
+    };
+    const flagValueSchema = {
+      type: "object",
+      properties: { type: { const: "Flag" }, object: { type: "string" }, reason: { type: "string" }, content: { type: "string" }, published: { type: "string" } },
+      required: ["type", "object", "reason", "published"],
+    };
+    const reviewValueSchema = {
+      type: "object",
+      properties: { type: { const: "Review" }, object: { type: "string" }, result: { enum: ["dismissed", "hidden"] }, published: { type: "string" } },
+      required: ["type", "object", "result", "published"],
+    };
+
+    const POST_SCHEMA = objectShell(postValueSchema);
+    const PUBLIC_SCHEMA = objectShell({ oneOf: [postValueSchema, commentValueSchema, likeValueSchema, eventValueSchema, updateValueSchema, removeValueSchema] });
+    const PRIVATE_SCHEMA = objectShell({ oneOf: [flagValueSchema, reviewValueSchema] });
+
+    const OFFICIAL_EVENTS = Object.freeze([
+      {
+        url: "official:cscw-2026-online", actor: "official", official: true,
+        value: { type: "Event", name: "CSCW 2026 online event", startTime: "2026-10-01T00:00:00Z", endTime: "2026-10-02T23:59:59Z", category: "Conference", allDay: true, timeZone: "Worldwide", published: "2026-05-01T00:00:00Z", content: "Online-only pre-conference paper presentations.", url: "https://cscw.acm.org/2026/online.html" },
+      },
+      {
+        url: "official:cscw-2026", actor: "official", official: true,
+        value: { type: "Event", name: "CSCW 2026", startTime: "2026-10-10T00:00:00Z", endTime: "2026-10-14T23:59:59Z", category: "Conference", allDay: true, timeZone: "America/Denver", published: "2026-01-01T00:00:00Z", content: "The 29th ACM Conference on Computer-Supported Cooperative Work and Social Computing in Salt Lake City, Utah.", location: "Salt Lake City, Utah, USA", url: "https://cscw.acm.org/2026/" },
+      },
+    ]);
+
+    function safeHttpUrl(value) {
+      if (!value) return "";
+      try {
+        const parsed = new URL(value);
+        return ["http:", "https:"].includes(parsed.protocol) ? parsed.href : "";
+      } catch { return ""; }
+    }
+
+    function formatDate(value, options = {}) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined, ...options }).format(date);
+    }
+
+    function latestByPublished(items) {
+      return [...items].sort((a, b) => String(b.value.published).localeCompare(String(a.value.published)) || b.url.localeCompare(a.url))[0];
+    }
+
+    function validChangesFor(base, changes) {
+      if (!changes || typeof changes !== "object" || Array.isArray(changes)) return {};
+      const allowed = base.value.type === "Event"
+        ? ["name", "startTime", "endTime", "category", "allDay", "timeZone", "content", "location", "url"]
+        : (base.value.name !== undefined ? ["name", "content", "topic", "url"] : ["content"]);
+      const cleaned = {};
+      for (const key of allowed) {
+        if (Object.prototype.hasOwnProperty.call(changes, key)) cleaned[key] = changes[key];
+      }
+      if (cleaned.url !== undefined) cleaned.url = safeHttpUrl(cleaned.url);
+      return cleaned;
+    }
+
+    function materialize(objects) {
+      const bases = objects.filter((object) => object.value?.type === "Note" || object.value?.type === "Event");
+      const baseMap = new Map(bases.map((object) => [object.url, object]));
+      const validRemovals = objects.filter((object) => object.value?.activity === "Remove" && ORGANIZER_ACTORS.includes(object.actor));
+      const removed = new Set(validRemovals.map((object) => object.value.object));
+      const updates = objects.filter((object) => object.value?.activity === "Update");
+      const byTarget = new Map();
+      for (const update of updates) {
+        const base = baseMap.get(update.value.object);
+        if (!base || update.actor !== base.actor) continue;
+        if (!byTarget.has(base.url)) byTarget.set(base.url, []);
+        byTarget.get(base.url).push(update);
+      }
+      return bases
+        .filter((base) => !removed.has(base.url))
+        .map((base) => {
+          const latest = latestByPublished(byTarget.get(base.url) || []);
+          return latest ? { ...base, value: { ...base.value, ...validChangesFor(base, latest.value.changes) }, updated: latest.value.published } : base;
+        });
+    }
+
+    function materializedOfType(objects, predicate) {
+      return materialize(objects).filter(predicate);
+    }
+
+    function commentsFor(objects, context) {
+      return materializedOfType(objects, (object) => object.value?.type === "Note" && object.value.context === context && object.value.inReplyTo === context)
+        .sort((a, b) => String(a.value.published).localeCompare(String(b.value.published)));
+    }
+
+    function uniqueLikes(objects, target) {
+      const removed = new Set(objects.filter((object) => object.value?.activity === "Remove" && ORGANIZER_ACTORS.includes(object.actor)).map((object) => object.value.object));
+      const likes = objects.filter((object) => object.value?.type === "Like" && object.value.object === target && !removed.has(object.url));
+      const byActor = new Map();
+      for (const like of likes.sort((a, b) => String(a.value.published).localeCompare(String(b.value.published)))) byActor.set(like.actor, like);
+      return [...byActor.values()];
+    }
+
+    async function fetchProgramList() {
+      if (!programListPromise) {
+        programListPromise = fetch(PROGRAM_LIST_URL).then((response) => {
+          if (!response.ok) throw new Error("The official program is temporarily unavailable.");
+          return response.json();
+        }).then((data) => {
+          if (!Array.isArray(data)) throw new Error("The official program returned an unfamiliar format.");
+          return data;
+        }).catch((error) => { programListPromise = undefined; throw error; });
+      }
+      return programListPromise;
+    }
+
+    async function loadProgram(year) {
+      const list = await fetchProgramList();
+      const cscw = list
+        .filter((item) => item.conference?.shortName === "CSCW" && item.publicationInfo?.publicationStatus === "PUBLISHED" && item.publicationInfo?.isProgramEnabled)
+        .sort((a, b) => b.conference.year - a.conference.year);
+      const years = [...new Set(cscw.map((item) => item.conference.year))].sort((a, b) => b - a);
+      const requested = Number(year);
+      const record = cscw.find((item) => item.conference.year === requested) || cscw.find((item) => item.conference.year === 2026) || cscw[0];
+      if (!record) throw new Error("No published CSCW program is currently available.");
+      const key = `${record.conference.id}:${record.publicationInfo.version}`;
+      if (!PROGRAM_CACHE.has(key)) {
+        const url = `https://files.sigchi.org/conference/cache/${record.conference.id}/${record.publicationInfo.version}/program`;
+        PROGRAM_CACHE.set(key, fetch(url).then((response) => {
+          if (!response.ok) throw new Error("The selected CSCW program could not be loaded.");
+          return response.json();
+        }).then((data) => {
+          if (!["sessions", "contents", "rooms", "people", "contentTypes"].every((field) => Array.isArray(data[field]))) throw new Error("The official program returned an unfamiliar format.");
+          return data;
+        }).catch((error) => { PROGRAM_CACHE.delete(key); throw error; }));
+      }
+      return { record, program: await PROGRAM_CACHE.get(key), years, has2026: cscw.some((item) => item.conference.year === 2026) };
+    }
+
+    const LoginControl = {
+      template: "#login-control-template",
+      setup() {
+        const graffiti = useGraffiti();
+        const session = useGraffitiSession();
+        const busy = ref(false);
+        const error = ref("");
+        async function logIn() { busy.value = true; error.value = ""; try { await graffiti.login(); } catch (e) { error.value = e?.message || "Login could not be opened."; } finally { busy.value = false; } }
+        async function logOut() { if (!session.value) return; busy.value = true; error.value = ""; try { await graffiti.logout(session.value); } catch (e) { error.value = e?.message || "Could not log out."; } finally { busy.value = false; } }
+        return { session, busy, error, logIn, logOut };
+      },
+    };
+
+    const PostComposer = {
+      template: "#post-composer-template",
+      emits: ["posted"],
+      setup(_, { emit }) {
+        const graffiti = useGraffiti();
+        const session = useGraffitiSession();
+        const name = ref(""); const content = ref(""); const topic = ref(TOPICS[0]); const link = ref("");
+        const busy = ref(false); const error = ref(""); const success = ref(false);
+        async function logIn() { busy.value = true; try { await graffiti.login(); } catch (e) { error.value = e?.message || "Login could not be opened."; } finally { busy.value = false; } }
+        async function submit() {
+          if (!session.value || busy.value) return;
+          const checkedLink = safeHttpUrl(link.value);
+          if (link.value && !checkedLink) { error.value = "Please use a valid http or https link."; return; }
+          busy.value = true; error.value = ""; success.value = false;
+          try {
+            const value = { type: "Note", name: name.value, content: content.value, topic: topic.value, published: new Date().toISOString() };
+            if (checkedLink) value.url = checkedLink;
+            await graffiti.post({ value, channels: [CHANNELS.public, CHANNELS.posts] }, session.value);
+            name.value = ""; content.value = ""; topic.value = TOPICS[0]; link.value = ""; success.value = true;
+            emit("posted");
+          } catch (e) { error.value = e?.message || "Your post could not be published. Please try again."; }
+          finally { busy.value = false; }
+        }
+        return { session, name, content, topic, link, busy, error, success, topicOptions: TOPICS, submit, logIn };
+      },
+    };
+
+    const DiscussionThread = {
+      template: "#discussion-thread-template",
+      props: { target: String, context: String, objects: Array, organizerActors: Array },
+      setup(props) {
+        const graffiti = useGraffiti(); const session = useGraffitiSession();
+        const text = ref(""); const busy = ref(false); const error = ref(""); const editingUrl = ref(""); const editText = ref("");
+        const comments = computed(() => commentsFor(props.objects || [], props.context));
+        const formId = computed(() => `comment-${String(props.context).replace(/[^a-z0-9]/gi, "-").slice(-30)}`);
+        async function addComment() {
+          if (!session.value || !text.value || busy.value) return;
+          busy.value = true; error.value = "";
+          try { await graffiti.post({ value: { type: "Note", content: text.value, context: props.context, inReplyTo: props.target, published: new Date().toISOString() }, channels: [CHANNELS.public, props.context] }, session.value); text.value = ""; }
+          catch (e) { error.value = e?.message || "Your comment could not be posted."; } finally { busy.value = false; }
+        }
+        function editComment(comment) { editingUrl.value = comment.url; editText.value = comment.value.content; error.value = ""; }
+        async function saveComment(comment) {
+          if (!session.value || !editText.value || busy.value) return;
+          busy.value = true; error.value = "";
+          try { await graffiti.post({ value: { activity: "Update", object: comment.url, changes: { content: editText.value }, published: new Date().toISOString() }, channels: [CHANNELS.public, props.context, comment.url] }, session.value); editingUrl.value = ""; }
+          catch (e) { error.value = e?.message || "The comment could not be updated."; } finally { busy.value = false; }
+        }
+        async function deleteComment(comment) {
+          if (!session.value || busy.value || !confirm("Delete this comment?")) return;
+          busy.value = true; error.value = ""; try { await graffiti.delete(comment.url, session.value); } catch (e) { error.value = e?.message || "The comment could not be deleted."; } finally { busy.value = false; }
+        }
+        async function hideComment(comment) {
+          if (!session.value || busy.value) return;
+          busy.value = true; error.value = ""; try { await graffiti.post({ value: { activity: "Remove", object: comment.url, reason: "Organizer moderation", published: new Date().toISOString() }, channels: [CHANNELS.public, props.context, comment.url] }, session.value); } catch (e) { error.value = e?.message || "The comment could not be hidden."; } finally { busy.value = false; }
+        }
+        return { session, comments, formId, text, busy, error, editingUrl, editText, formatDate, addComment, editComment, saveComment, deleteComment, hideComment };
+      },
+    };
+
+    const PostCard = {
+      template: "#post-card-template",
+      components: { DiscussionThread },
+      props: { post: Object, objects: Array, organizerActors: Array, featured: Boolean },
+      emits: ["open"],
+      setup(props) {
+        const graffiti = useGraffiti(); const session = useGraffitiSession();
+        const busy = ref(false); const error = ref(""); const editing = ref(false); const commentsOpen = ref(false); const reportOpen = ref(false);
+        const editName = ref(""); const editContent = ref(""); const editTopic = ref(""); const editLink = ref(""); const reportReason = ref("spam"); const reportDetails = ref("");
+        const value = computed(() => props.post.value);
+        const comments = computed(() => commentsFor(props.objects || [], props.post.url));
+        const likes = computed(() => uniqueLikes(props.objects || [], props.post.url));
+        const likeCount = computed(() => likes.value.length);
+        const likedByMe = computed(() => Boolean(session.value && likes.value.some((like) => like.actor === session.value.actor)));
+        const isOwner = computed(() => Boolean(session.value && session.value.actor === props.post.actor));
+        const isOrganizer = computed(() => Boolean(session.value && props.organizerActors.includes(session.value.actor)));
+        const isPostOrganizer = computed(() => props.organizerActors.includes(props.post.actor));
+        const canReport = computed(() => props.organizerActors.length > 0 && !isOwner.value);
+        const safeLink = computed(() => safeHttpUrl(value.value.url));
+        const linkLabel = computed(() => { try { return new URL(safeLink.value).hostname; } catch { return safeLink.value; } });
+        function beginEdit() { editName.value = value.value.name; editContent.value = value.value.content; editTopic.value = value.value.topic; editLink.value = value.value.url || ""; editing.value = true; error.value = ""; }
+        async function saveEdit() {
+          if (!session.value || busy.value) return;
+          const checkedLink = safeHttpUrl(editLink.value); if (editLink.value && !checkedLink) { error.value = "Please use a valid http or https link."; return; }
+          busy.value = true; error.value = "";
+          try { await graffiti.post({ value: { activity: "Update", object: props.post.url, changes: { name: editName.value, content: editContent.value, topic: editTopic.value, url: checkedLink }, published: new Date().toISOString() }, channels: [CHANNELS.public, props.post.url] }, session.value); editing.value = false; }
+          catch (e) { error.value = e?.message || "The post could not be updated."; } finally { busy.value = false; }
+        }
+        async function toggleLike() {
+          if (!session.value || busy.value) return;
+          busy.value = true; error.value = "";
+          try { const mine = likes.value.find((like) => like.actor === session.value.actor); if (mine) await graffiti.delete(mine.url, session.value); else await graffiti.post({ value: { type: "Like", object: props.post.url, published: new Date().toISOString() }, channels: [CHANNELS.public, props.post.url] }, session.value); }
+          catch (e) { error.value = e?.message || "Your like could not be saved."; } finally { busy.value = false; }
+        }
+        async function removePost() { if (!session.value || busy.value || !confirm("Delete this discussion?")) return; busy.value = true; error.value = ""; try { await graffiti.delete(props.post.url, session.value); } catch (e) { error.value = e?.message || "The post could not be deleted."; } finally { busy.value = false; } }
+        async function hidePost() { if (!session.value || busy.value || !confirm("Hide this discussion in CSCW Meta?")) return; busy.value = true; error.value = ""; try { await graffiti.post({ value: { activity: "Remove", object: props.post.url, reason: "Organizer moderation", published: new Date().toISOString() }, channels: [CHANNELS.public, props.post.url] }, session.value); } catch (e) { error.value = e?.message || "The post could not be hidden."; } finally { busy.value = false; } }
+        async function submitReport() {
+          if (!session.value || busy.value || !canReport.value) return;
+          busy.value = true; error.value = "";
+          try { const allowed = [...new Set([session.value.actor, ...props.organizerActors])]; const flag = { type: "Flag", object: props.post.url, reason: reportReason.value, published: new Date().toISOString() }; if (reportDetails.value) flag.content = reportDetails.value; await graffiti.post({ value: flag, channels: [CHANNELS.moderation], allowed }, session.value); reportOpen.value = false; reportDetails.value = ""; }
+          catch (e) { error.value = e?.message || "The report could not be sent."; } finally { busy.value = false; }
+        }
+        return { session, busy, error, editing, commentsOpen, reportOpen, editName, editContent, editTopic, editLink, reportReason, reportDetails, value, comments, likeCount, likedByMe, isOwner, isOrganizer, isPostOrganizer, canReport, safeLink, linkLabel, topicOptions: TOPICS, formatDate, beginEdit, saveEdit, toggleLike, removePost, hidePost, submitReport };
+      },
+    };
+
+    const FeedView = {
+      template: "#feed-view-template", components: { PostComposer, PostCard }, props: { objects: Array, loading: Boolean, organizerActors: Array }, emits: ["open-post"],
+      setup(props) {
+        const search = ref(""); const selectedTopic = ref("All"); const composerDialog = ref(null); const composerOpen = ref(false);
+        const posts = computed(() => materializedOfType(props.objects || [], (object) => object.value?.type === "Note" && object.value.name !== undefined).sort((a, b) => String(b.value.published).localeCompare(String(a.value.published))));
+        const featured = computed(() => posts.value.filter((post) => props.organizerActors.includes(post.actor)).slice(0, 2));
+        const featuredUrls = computed(() => new Set(featured.value.map((post) => post.url)));
+        const filteredPosts = computed(() => posts.value.filter((post) => !featuredUrls.value.has(post.url)).filter((post) => selectedTopic.value === "All" || post.value.topic === selectedTopic.value).filter((post) => !search.value || `${post.value.name} ${post.value.content} ${post.value.topic}`.toLowerCase().includes(search.value.toLowerCase())));
+        const month = (value) => new Intl.DateTimeFormat(undefined, { month: "short", timeZone: "UTC" }).format(new Date(value));
+        const day = (value) => new Intl.DateTimeFormat(undefined, { day: "numeric", timeZone: "UTC" }).format(new Date(value));
+        function openComposer() { composerOpen.value = true; if (composerDialog.value && !composerDialog.value.open) composerDialog.value.showModal(); }
+        function closeComposer() { composerOpen.value = false; if (composerDialog.value?.open) composerDialog.value.close(); }
+        return { search, selectedTopic, composerDialog, composerOpen, topics: ["All", ...TOPICS], posts, featured, filteredPosts, officialEvents: OFFICIAL_EVENTS, month, day, openComposer, closeComposer };
+      },
+    };
+
+    const PostView = {
+      template: "#post-view-template", components: { PostCard }, props: { url: String, objects: Array, organizerActors: Array }, emits: ["back"],
+      setup(props) {
+        function resolvedPost(fetched) { const local = materialize(props.objects || []).find((object) => object.url === props.url); const candidate = local || fetched; if (!candidate) return null; const hidden = (props.objects || []).some((object) => object.value?.activity === "Remove" && object.value.object === candidate.url && ORGANIZER_ACTORS.includes(object.actor)); return hidden ? null : candidate; }
+        return { postSchema: POST_SCHEMA, resolvedPost };
+      },
+    };
+
+    const ProgramView = {
+      template: "#program-view-template", props: { objects: Array, initialYear: [String, Number] }, emits: ["open-paper", "year-change"],
+      setup(props, { emit }) {
+        const loading = ref(true); const error = ref(""); const program = ref(null); const record = ref(null); const availableYears = ref([]); const has2026 = ref(false); const selectedYear = ref(Number(props.initialYear) || 2026); const search = ref("");
+        const peopleMap = computed(() => new Map((program.value?.people || []).map((person) => [person.id, person])));
+        const roomMap = computed(() => new Map((program.value?.rooms || []).map((room) => [room.id, room.name])));
+        const contentMap = computed(() => new Map((program.value?.contents || []).map((content) => [content.id, content])));
+        const paperTypeIds = computed(() => new Set((program.value?.contentTypes || []).filter((type) => /paper/i.test(type.name || type.displayName || "")).map((type) => type.id)));
+        function papersForSession(sessionItem) { return (sessionItem.contentIds || []).map((id) => contentMap.value.get(id)).filter((content) => content && paperTypeIds.value.has(content.typeId)); }
+        function authorNames(paper) { return (paper.authors || []).map((author) => peopleMap.value.get(author.personId)).filter(Boolean).map((person) => [person.firstName, person.middleInitial, person.lastName].filter(Boolean).join(" ")).join(", ") || "Authors not listed"; }
+        function roomName(id) { return roomMap.value.get(id) || ""; }
+        function sessionDate(sessionItem) { if (!sessionItem.startDate) return "Time to be announced"; const start = new Date(sessionItem.startDate); const end = new Date(sessionItem.endDate); return `${new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" }).format(start)} · ${new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(start)}–${new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(end)}`; }
+        const filteredSessions = computed(() => (program.value?.sessions || []).map((sessionItem) => ({ sessionItem, papers: papersForSession(sessionItem) })).filter(({ papers }) => papers.length).filter(({ sessionItem, papers }) => { const q = search.value.toLowerCase(); return !q || sessionItem.name.toLowerCase().includes(q) || papers.some((paper) => `${paper.title} ${authorNames(paper)}`.toLowerCase().includes(q)); }).map(({ sessionItem }) => sessionItem).sort((a, b) => (a.startDate || 0) - (b.startDate || 0)));
+        function paperKey(id) { return `cscw-meta:v1:paper:${record.value.conference.id}:${id}`; }
+        function discussionCount(id) { return commentsFor(props.objects || [], paperKey(id)).length; }
+        async function load(year) { loading.value = true; error.value = ""; try { const result = await loadProgram(year); program.value = result.program; record.value = result.record; availableYears.value = result.years; has2026.value = result.has2026; selectedYear.value = result.record.conference.year; emit("year-change", selectedYear.value); } catch (e) { error.value = e?.message || "The official program is temporarily unavailable."; program.value = null; } finally { loading.value = false; } }
+        function changeYear() { load(selectedYear.value); }
+        function openPaper(paper, sessionItem) { emit("open-paper", { year: selectedYear.value, id: paper.id, sessionId: sessionItem.id }); }
+        onMounted(() => load(selectedYear.value));
+        return { loading, error, program, availableYears, has2026, selectedYear, search, filteredSessions, papersForSession, authorNames, roomName, sessionDate, discussionCount, changeYear, openPaper };
+      },
+    };
+
+    const PaperView = {
+      template: "#paper-view-template", components: { DiscussionThread }, props: { year: Number, contentId: Number, objects: Array, organizerActors: Array }, emits: ["back"],
+      setup(props) {
+        const loading = ref(true); const error = ref(""); const program = ref(null); const record = ref(null); const paper = ref(null); const session = ref(null);
+        const paperKey = computed(() => record.value && paper.value ? `cscw-meta:v1:paper:${record.value.conference.id}:${paper.value.id}` : "");
+        const authorNames = computed(() => { const people = new Map((program.value?.people || []).map((person) => [person.id, person])); return (paper.value?.authors || []).map((author) => people.get(author.personId)).filter(Boolean).map((person) => [person.firstName, person.middleInitial, person.lastName].filter(Boolean).join(" ")).join(", ") || "Authors not listed"; });
+        const roomName = computed(() => (program.value?.rooms || []).find((room) => room.id === session.value?.roomId)?.name || "");
+        const sessionDate = computed(() => { if (!session.value?.startDate) return "Time to be announced"; const date = new Date(session.value.startDate); return new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" }).format(date); });
+        const officialProgramUrl = computed(() => `https://programs.sigchi.org/cscw/${props.year}/program`);
+        onMounted(async () => { try { const result = await loadProgram(props.year); program.value = result.program; record.value = result.record; paper.value = result.program.contents.find((content) => content.id === props.contentId) || null; session.value = result.program.sessions.find((item) => item.contentIds?.includes(props.contentId)) || null; } catch (e) { error.value = e?.message || "The paper could not be loaded."; } finally { loading.value = false; } });
+        return { loading, error, paper, session, paperKey, authorNames, roomName, sessionDate, officialProgramUrl };
+      },
+    };
+
+    const EventForm = {
+      template: "#event-form-template", emits: ["created"],
+      setup(_, { emit }) {
+        const graffiti = useGraffiti(); const session = useGraffitiSession();
+        const name = ref(""); const date = ref(""); const endDate = ref(""); const category = ref("Community"); const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; const timeZone = ref(localZone); const content = ref(""); const location = ref(""); const link = ref(""); const busy = ref(false); const error = ref("");
+        async function logIn() { busy.value = true; try { await graffiti.login(); } catch (e) { error.value = e?.message || "Login could not be opened."; } finally { busy.value = false; } }
+        async function submit() {
+          if (!session.value || busy.value) return;
+          const checkedLink = safeHttpUrl(link.value); if (link.value && !checkedLink) { error.value = "Please use a valid http or https link."; return; }
+          if (endDate.value && endDate.value < date.value) { error.value = "End date must be on or after the start date."; return; }
+          busy.value = true; error.value = "";
+          try { const value = { type: "Event", name: name.value, startTime: `${date.value}T00:00:00Z`, category: category.value, allDay: true, timeZone: timeZone.value, published: new Date().toISOString() }; if (endDate.value) value.endTime = `${endDate.value}T23:59:59Z`; if (content.value) value.content = content.value; if (location.value) value.location = location.value; if (checkedLink) value.url = checkedLink; await graffiti.post({ value, channels: [CHANNELS.public, CHANNELS.events] }, session.value); name.value = ""; date.value = ""; endDate.value = ""; content.value = ""; location.value = ""; link.value = ""; emit("created"); }
+          catch (e) { error.value = e?.message || "The date could not be added."; } finally { busy.value = false; }
+        }
+        return { session, name, date, endDate, category, localZone, timeZone, content, location, link, busy, error, logIn, submit };
+      },
+    };
+
+    const EventCard = {
+      template: "#event-card-template", props: { event: Object, detailed: Boolean }, emits: ["select", "close"],
+      setup(props) {
+        const graffiti = useGraffiti(); const session = useGraffitiSession(); const editing = ref(false); const busy = ref(false); const error = ref(""); const editName = ref(props.event.value.name); const editDate = ref(props.event.value.startTime.slice(0, 10)); const editCategory = ref(props.event.value.category); const editContent = ref(props.event.value.content || "");
+        const isOwner = computed(() => Boolean(session.value && session.value.actor === props.event.actor)); const safeLink = computed(() => safeHttpUrl(props.event.value.url));
+        const eventDate = computed(() => { const start = formatDate(props.event.value.startTime, { year: "numeric", timeZone: "UTC" }); const end = props.event.value.endTime ? formatDate(props.event.value.endTime, { year: "numeric", timeZone: "UTC" }) : ""; return `${start}${end && end !== start ? ` – ${end}` : ""} · ${props.event.value.timeZone}`; });
+        async function remove() { if (!session.value || busy.value || !confirm("Delete this calendar entry?")) return; busy.value = true; error.value = ""; try { await graffiti.delete(props.event.url, session.value); } catch (e) { error.value = e?.message || "The date could not be deleted."; } finally { busy.value = false; } }
+        async function save() { if (!session.value || busy.value) return; busy.value = true; error.value = ""; try { await graffiti.post({ value: { activity: "Update", object: props.event.url, changes: { name: editName.value, startTime: `${editDate.value}T00:00:00Z`, category: editCategory.value, content: editContent.value }, published: new Date().toISOString() }, channels: [CHANNELS.public, CHANNELS.events, props.event.url] }, session.value); editing.value = false; } catch (e) { error.value = e?.message || "The date could not be updated."; } finally { busy.value = false; } }
+        return { session, editing, busy, error, editName, editDate, editCategory, editContent, isOwner, safeLink, eventDate, remove, save };
+      },
+    };
+
+    const CalendarView = {
+      template: "#calendar-view-template", components: { EventForm, EventCard }, props: { objects: Array },
+      setup(props) {
+        const today = new Date(); const displayedMonth = ref(new Date(today.getFullYear(), today.getMonth(), 1)); const selectedEvent = ref(null);
+        const communityEvents = computed(() => materializedOfType(props.objects || [], (object) => object.value?.type === "Event").map((event) => ({ ...event, official: false })));
+        const events = computed(() => { const officialLinks = new Set(OFFICIAL_EVENTS.map((event) => event.value.url)); return [...OFFICIAL_EVENTS, ...communityEvents.value.filter((event) => !event.value.url || !officialLinks.has(event.value.url))].sort((a, b) => a.value.startTime.localeCompare(b.value.startTime)); });
+        const upcoming = computed(() => { const todayKey = new Date().toISOString().slice(0, 10); return events.value.filter((event) => (event.value.endTime || event.value.startTime).slice(0, 10) >= todayKey); });
+        const monthLabel = computed(() => new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(displayedMonth.value));
+        const calendarDays = computed(() => { const year = displayedMonth.value.getFullYear(); const month = displayedMonth.value.getMonth(); const first = new Date(year, month, 1); const start = new Date(year, month, 1 - first.getDay()); return Array.from({ length: 42 }, (_, index) => { const date = new Date(start); date.setDate(start.getDate() + index); const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; return { key, day: date.getDate(), current: date.getMonth() === month }; }); });
+        function eventsOn(key) { return events.value.filter((event) => { const start = event.value.startTime.slice(0, 10); const end = (event.value.endTime || event.value.startTime).slice(0, 10); return key >= start && key <= end; }); }
+        function shiftMonth(amount) { displayedMonth.value = new Date(displayedMonth.value.getFullYear(), displayedMonth.value.getMonth() + amount, 1); }
+        function goToday() { displayedMonth.value = new Date(today.getFullYear(), today.getMonth(), 1); }
+        function eventCreated() { selectedEvent.value = null; }
+        return { weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], selectedEvent, events, upcoming, monthLabel, calendarDays, eventsOn, shiftMonth, goToday, eventCreated };
+      },
+    };
+
+    const ConferencesView = {
+      template: "#conferences-view-template",
+      setup() { return { conferences: Array.from({ length: 8 }, (_, index) => { const year = 2025 - index; return { year, label: year === 2025 ? "Bergen, Norway" : "Past conference", url: `https://cscw.acm.org/${year}/` }; }) }; },
+    };
+
+    const ModerationView = {
+      template: "#moderation-view-template", props: { publicObjects: Array, organizerActors: Array },
+      setup(props) {
+        const graffiti = useGraffiti(); const session = useGraffitiSession(); const busyUrl = ref(""); const error = ref("");
+        const { objects, isFirstPoll, poll } = useGraffitiDiscover([CHANNELS.moderation], PRIVATE_SCHEMA, session, false);
+        const validReviews = computed(() => objects.value.filter((object) => object.value?.type === "Review" && props.organizerActors.includes(object.actor)));
+        const reviewed = computed(() => new Set(validReviews.value.map((review) => review.value.object)));
+        const activeFlags = computed(() => objects.value.filter((object) => object.value?.type === "Flag" && !reviewed.value.has(object.url)).sort((a, b) => String(b.value.published).localeCompare(String(a.value.published))));
+        function contentPreview(url) { const object = materialize(props.publicObjects || []).find((item) => item.url === url); return object ? (object.value.name || object.value.content || "Content") : "Content is no longer available"; }
+        async function resolve(flag, result) {
+          if (!session.value || busyUrl.value) return; busyUrl.value = flag.url; error.value = "";
+          try { if (result === "hidden") await graffiti.post({ value: { activity: "Remove", object: flag.value.object, reason: flag.value.reason, published: new Date().toISOString() }, channels: [CHANNELS.public, flag.value.object] }, session.value); const allowed = [...new Set([flag.actor, session.value.actor, ...props.organizerActors])]; await graffiti.post({ value: { type: "Review", object: flag.url, result, published: new Date().toISOString() }, channels: [CHANNELS.moderation], allowed }, session.value); }
+          catch (e) { error.value = e?.message || "The report could not be resolved. Please retry."; } finally { busyUrl.value = ""; }
+        }
+        return { objects, isFirstPoll, poll, activeFlags, busyUrl, error, formatDate, contentPreview, resolve };
+      },
+    };
+
+    createApp({
+      template: "#app-template",
+      components: { LoginControl, FeedView, PostView, ProgramView, PaperView, CalendarView, ConferencesView, ModerationView },
+      setup() {
+        const session = useGraffitiSession();
+        const routeAddress = ref(""); const routeParams = ref(new URLSearchParams()); const toast = ref(""); const mobileMenuOpen = ref(false); let toastTimer;
+        const { objects: publicObjects, isFirstPoll } = useGraffitiDiscover([CHANNELS.public], PUBLIC_SCHEMA, undefined, true);
+        const currentView = computed(() => routeAddress.value || "home");
+        const isOrganizer = computed(() => Boolean(session.value && ORGANIZER_ACTORS.includes(session.value.actor)));
+        function syncRoute() { routeAddress.value = window.address || ""; routeParams.value = new URLSearchParams(window.params || ""); }
+        function navigate(view, params = {}) { const address = view === "home" ? "" : view; const nextParams = new URLSearchParams(); for (const [key, value] of Object.entries(params)) if (value !== undefined && value !== null && value !== "") nextParams.set(key, String(value)); window.address = address; window.params = nextParams; routeAddress.value = address; routeParams.value = nextParams; window.scrollTo?.({ top: 0, behavior: "smooth" }); }
+        function go(view, params = {}) { mobileMenuOpen.value = false; navigate(view, params); }
+        function openPost(url) { navigate("post", { post: url }); }
+        function openPaper({ year, id }) { navigate("paper", { year, paper: id }); }
+        function setYear(year) { if (currentView.value !== "program") return; const params = new URLSearchParams(routeParams.value); params.set("year", String(year)); window.params = params; routeParams.value = params; }
+        function showToast(message) { toast.value = message; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.value = ""; }, 3500); }
+        onMounted(() => { window.addEventListener("addresschange", syncRoute); window.addEventListener("paramschange", syncRoute); syncRoute(); });
+        watch(() => session.value, (next) => { if (!next && currentView.value === "moderation") navigate("home"); });
+        return { session, publicObjects, isFirstPoll, currentView, routeParams, toast, mobileMenuOpen, organizerActors: ORGANIZER_ACTORS, isOrganizer, navigate, go, openPost, openPaper, setYear, showToast };
+      },
+    }).use(GraffitiPlugin, { graffiti: new window.Graffiti() }).mount("#app");
+  </script>
+</body>
+</html>

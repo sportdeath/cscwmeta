@@ -4,13 +4,26 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <title>The Hallway Track</title>
+    <title>CSCW Meta</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%231769d1'/%3E%3Cpath d='M21 11h16c8 0 13 6 13 13v5c0 8-5 13-13 13H26l-10 8v-9c-5-2-8-6-8-12v-5c0-7 5-13 13-13Z' fill='white'/%3E%3Cpath d='M37 27h7c8 0 13 5 13 13s-5 13-13 13h-5l-8 6v-8c-5-2-8-6-8-11 0-8 6-13 14-13Z' fill='%2370e0d4' stroke='%231769d1' stroke-width='3'/%3E%3C/svg%3E" />
     <script src="https://social.wiki/init.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css" />
     <style>
       body { max-width: none; margin: 0; padding: 0; }
-      #app { box-sizing: border-box; min-height: 100dvh; display: flex; flex-direction: column; }
+      /* The outer transclusion supplies viewport height; a dvh minimum here prevents autosize from shrinking. */
+      #app { box-sizing: border-box; display: flex; flex-direction: column; }
       #app > main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      .welcome-backdrop { position: fixed; z-index: 4; inset: 0; pointer-events: none; background: #0007; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); animation: welcome-fade .25s ease-out both; }
+      .welcome-prompt { position: fixed; z-index: 5; top: 50%; left: 50%; transform: translate(-50%, -50%); box-sizing: border-box; width: min(23rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); overflow-y: auto; margin: 0; padding: 1rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--background-alt); box-shadow: 0 .5rem 2rem #0003; animation: welcome-enter .25s ease-out both; }
+      .welcome-prompt h2 { margin: 0 0 .5rem; font-size: 1.25rem; }
+      .welcome-prompt p { margin: 0 0 1rem; }
+      .welcome-actions { display: grid; gap: .5rem; }
+      .welcome-actions .introduce-button, .welcome-actions button { box-sizing: border-box; width: 100%; margin: 0; padding: .75rem 1rem; text-align: center; }
+      @keyframes welcome-fade { from { opacity: 0; } }
+      @keyframes welcome-enter { from { opacity: 0; transform: translate(-50%, -50%) translateY(.5rem) scale(.98); } }
+      @media (prefers-reduced-motion: reduce) {
+        .welcome-backdrop, .welcome-prompt { animation: none; }
+      }
       .home-tabs { box-sizing: border-box; display: flex; gap: .25rem; width: 100%; max-width: 50rem; margin: 0 auto; padding: .75rem 1rem 0; border-bottom: 1px solid var(--border); }
       .home-tabs a { padding: .4rem .75rem; color: inherit; text-decoration: none; border-bottom: 2px solid transparent; }
       .home-tabs a[aria-current="page"] { border-color: var(--links); color: var(--links); font-weight: bold; }
@@ -31,15 +44,15 @@
       .people-directory > header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
       .people-directory > header.profile-page-header { justify-content: flex-start; }
       .people-directory h1 { margin: 0; font-size: 1.5rem; }
-      .people-search { position: relative; margin-top: 1rem; }
-      .people-search svg { position: absolute; top: 50%; left: .75rem; width: 1.1rem; height: 1.1rem; transform: translateY(-50%); pointer-events: none; }
-      .people-search input { box-sizing: border-box; width: 100%; margin: 0; padding-left: 2.25rem; }
+      .people-search, .program-search { position: relative; margin-top: 0; }
+      .people-search svg, .program-search svg { position: absolute; top: 50%; left: .75rem; width: 1.1rem; height: 1.1rem; transform: translateY(-50%); pointer-events: none; }
+      .people-search input, .program-search input { box-sizing: border-box; width: 100%; margin: 0; padding-left: 2.25rem; }
       .people-filters { display: flex; flex-wrap: wrap; gap: .35rem 1rem; margin: .5rem 0 0; padding: 0; border: 0; }
       .people-filters label { display: inline-flex; align-items: center; gap: .3rem; margin: 0; padding: .25rem .55rem; border: 1px solid; border-radius: 1rem; cursor: pointer; }
       .people-filters input { margin: 0; accent-color: var(--accent); }
       .people-filters label:has(input:checked) { background: color-mix(in srgb, var(--accent) 30%, var(--background)); box-shadow: inset 0 0 0 1px var(--accent); }
       .people-filters .meeting, .profile-badges .meeting { --accent: #16a085; }
-      .people-filters .presenter, .profile-badges .presenter { --accent: #9b59b6; }
+      .people-filters .program, .profile-badges .program { --accent: #9b59b6; }
       .people-filters label, .profile-badges span { color: color-mix(in srgb, var(--accent) 72%, var(--text-main)); background: color-mix(in srgb, var(--accent) 18%, var(--background)); border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
       .introduce-button { box-sizing: border-box; display: block; width: 100%; margin: 1rem 0; padding: 1rem; border: 1px solid var(--links); border-radius: .4rem; background: var(--links); color: white; font-size: 1.1rem; text-align: center; text-decoration: none; }
       .profile-form { margin: 1rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: .4rem; }
@@ -72,44 +85,149 @@
       .profile-detail > header { padding: .25rem; }
       .profile-detail .profile-avatar { width: 4rem; height: 4rem; }
       .profile-detail section { margin-top: .75rem; padding: .85rem 1rem; border: 1px solid var(--border); border-radius: .4rem; background: var(--background-alt); }
-      .profile-detail section h3 { margin: 0 0 .65rem; padding-bottom: .45rem; border-bottom: 1px solid var(--border); color: var(--links); font-size: 1.1rem; }
+      .profile-detail section h2 { margin: 0 0 .65rem; padding-bottom: .45rem; border-bottom: 1px solid var(--border); color: var(--links); font-size: 1.1rem; }
       .profile-detail section p, .profile-detail section ul { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
       .profile-detail section p a { color: var(--links); text-decoration: underline; }
       .profile-detail section ul { padding-left: 1.25rem; }
+      .profile-detail section li + li { margin-top: .35rem; }
       .profile-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: 1rem; }
       .profile-actions button { margin: 0; }
       .profile-actions .profile-edit { border: 1px solid var(--links); background: var(--links); color: white; }
       .profile-identity { display: flex; align-items: center; gap: .7rem; min-width: 0; }
       .profile-identity > div:last-child { min-width: 0; }
-      .profile-identity h2 { margin: 0; font-size: 1.1rem; }
-      .profile-identity h2 small { font-size: .8em; font-weight: normal; }
+      .profile-identity h1, .profile-identity h2 { margin: 0; font-size: 1.1rem; }
+      .profile-detail .profile-identity h1 { font-size: 1.4rem; }
+      .profile-identity h1 small, .profile-identity h2 small { font-size: .8em; font-weight: normal; }
       .profile-handle { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted, #666); }
       .profile-badges { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .6rem; }
       .profile-badges span { padding: .1rem .45rem; border: 1px solid; border-radius: 1rem; font-size: .8rem; }
       .profile-avatar { display: grid; place-items: center; flex: none; width: 3rem; height: 3rem; overflow: hidden; border-radius: 50%; background: var(--background-body); font-size: 1.4rem; }
+      .profile-avatar:not(.profile-photo-preview):not(:has(img)) { box-sizing: border-box; border: 1px solid var(--border); }
       .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
       .profile-photo-preview { width: 5rem; height: 5rem; border: 2px dashed var(--border); }
-      .chat { flex: 0 0 100dvh; min-height: 0; display: flex; flex-direction: column; }
-      .chat > header { padding: 1rem 1rem 0; }
+      .papers { box-sizing: border-box; width: 100%; max-width: 50rem; margin: 0 auto; padding: 1rem; }
+      .papers h1 { margin: 0; font-size: 1.5rem; }
+      .papers > header { display: flex; align-items: center; justify-content: space-between; gap: .65rem; }
+      .paper-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; }
+      .paper-read { padding: .4rem .65rem; border: 1px solid var(--links); border-radius: .35rem; background: var(--links); color: white; text-decoration: none; white-space: nowrap; }
+      .paper-acm { background: transparent; color: var(--links); }
+      .paper-link-short { display: none; }
+      .paper-read-status { color: var(--text-muted, #666); font-size: .85rem; }
+      .program-search { margin-bottom: .75rem; }
+      .paper-day-picker { --edge-fade: 1.5rem; display: flex; gap: .4rem; margin: 0 0 .55rem; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; scrollbar-width: none; }
+      .paper-day-picker::-webkit-scrollbar { display: none; }
+      .paper-day-picker.more-left { mask-image: linear-gradient(to right, transparent, black var(--edge-fade)); }
+      .paper-day-picker.more-right { mask-image: linear-gradient(to right, black calc(100% - var(--edge-fade)), transparent); }
+      .paper-day-picker.more-left.more-right { mask-image: linear-gradient(to right, transparent, black var(--edge-fade), black calc(100% - var(--edge-fade)), transparent); }
+      .paper-day-picker button { flex: none; margin: 0; padding-inline: .35rem; white-space: nowrap; }
+      .paper-day-picker button[aria-pressed="true"] { border-color: var(--links); background: var(--links); color: white; }
+      .program-filters { display: flex; flex-wrap: wrap; gap: .4rem 1rem; margin: 0 0 .7rem; padding: 0; border: 0; }
+      .program-filters label { display: inline-flex; align-items: center; gap: .35rem; margin: 0; }
+      .program-filters input { margin: 0; }
+      .program-time-block { margin: 1.75rem 0 0; }
+      .program-time-block + .program-time-block { padding-top: 1.75rem; border-top: 2px solid color-mix(in srgb, var(--links) 35%, var(--border)); }
+      .program-time-block h2 { margin: 0 0 .8rem; color: var(--links); font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+      .program-time-block h2 > * { white-space: nowrap; }
+      .paper-browse details { margin: .5rem 0; padding: 0; border: 1px solid var(--border); border-radius: .4rem; background: var(--background-alt); }
+      .paper-browse .program-session { margin: .5rem 0; padding: .35rem .45rem; border: 1px solid var(--border); border-radius: .4rem; background: var(--background-alt); }
+      .paper-browse .program-time-block > details, .paper-browse .program-time-block > .program-session { margin: .75rem 0; border-color: color-mix(in srgb, var(--border) 75%, var(--text-main)); }
+      .program-session small { display: block; margin-top: .15rem; color: var(--text-muted, #666); }
+      .paper-browse summary { box-sizing: border-box; display: list-item; width: 100%; margin: 0; padding: .35rem .45rem; border: 0; border-radius: inherit; background: transparent; box-shadow: none; list-style-position: inside; cursor: pointer; }
+      .paper-browse summary small { display: block; margin-top: .15rem; color: var(--text-muted, #666); }
+      .paper-browse .paper-list { margin: .6rem .45rem .45rem; }
+      .paper-browse .paper-list a { padding: .65rem .7rem; }
+      .paper-browse .paper-list li:last-child { margin-bottom: 0; }
+      .paper-browse .paper-room-chat { display: block; width: max-content; margin: 0 .45rem; }
+      .paper-browse .program-session .paper-room-chat { margin: .35rem 0 0; }
+      .paper-list { list-style: none; margin: 0; padding: 0; }
+      .paper-list li { display: flex; align-items: stretch; gap: .4rem; margin: 0 0 .5rem; }
+      .paper-list a { display: block; flex: 1; min-width: 0; padding: .8rem 1rem; border: 1px solid var(--border); border-radius: .4rem; background: var(--background-alt); color: inherit; text-decoration: none; }
+      .paper-list small { display: block; margin-top: .3rem; color: var(--text-muted, #666); }
+      .paper-list .paper-inline-like { box-sizing: border-box; display: flex; align-items: center; justify-content: center; flex: none; align-self: center; width: 2.5rem; height: 2.5rem; margin: 0; padding: 0; font-size: 1.25rem; line-height: 1; }
+      .paper-list .paper-inline-like[aria-pressed="true"] { border-color: var(--links); color: var(--links); }
+      .paper-like-label { display: none; }
+      @media (min-width: 40rem) {
+        .paper-list .paper-inline-like { width: 5.5rem; font-size: 1rem; }
+        .paper-like-label { display: inline; margin-left: .25rem; }
+      }
+      @media (max-width: 39.999rem) {
+        .papers { padding: .5rem .4rem; }
+        .papers > header { flex-wrap: wrap; }
+        .paper-links { min-width: 0; margin-left: auto; gap: .25rem; }
+        .paper-read { padding: .3rem .45rem; font-size: .85rem; }
+        .paper-link-full { display: none; }
+        .paper-link-short { display: inline; }
+        .paper-list a { padding: .65rem .7rem; }
+      }
+      .liked-paper-time { display: block; margin-top: .15rem; color: var(--text-muted, #666); }
+      .paper-detail h1 { margin: .8rem 0 .25rem; overflow-wrap: anywhere; }
+      .paper-authors { margin: .25rem 0; }
+      .paper-context { margin: .75rem 0; padding: .15rem .65rem; border-left: 2px solid var(--links); color: var(--text-muted, #666); font-size: .9rem; }
+      .paper-context p { margin: .2rem 0; }
+      .paper-room-chat { display: inline-block; margin-left: .35rem; padding: .2rem .55rem; border: 1px solid var(--links); border-radius: 1rem; background: color-mix(in srgb, var(--links) 10%, var(--background)); color: var(--links); font-weight: 600; text-decoration: none; white-space: nowrap; }
+      .paper-detail section.paper-claims { margin: .75rem 0; padding: 0; border: 0; background: none; }
+      .paper-detail section.paper-claims h2 { margin: 0 0 .3rem; font-size: .95rem; }
+      .paper-reactions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .75rem 0 1rem; }
+      .paper-reactions > button { margin: 0; }
+      .paper-share svg { width: 1em; height: 1em; margin-right: .25em; vertical-align: -.15em; }
+      .paper-detail section { margin-top: 1rem; padding: .8rem 1rem; border: 1px solid var(--border); border-radius: .4rem; background: var(--background-alt); }
+      .paper-detail section h2 { margin: 0 0 .6rem; font-size: 1.1rem; }
+      .paper-detail .abstract { white-space: pre-wrap; overflow-wrap: anywhere; }
+      .paper-detail .abstract p { margin: 0; }
+      .paper-detail .claimants { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; list-style: none; margin: 0; padding: 0; }
+      .paper-detail .claimants a { display: inline-flex; align-items: center; gap: .3rem; }
+      .paper-detail .liker-preview { display: flex; align-items: center; }
+      .paper-detail .liker-preview > span + span { margin-left: -.55rem; }
+      .paper-detail .liker-preview > span { display: grid; place-items: center; width: 1.8rem; height: 1.8rem; overflow: hidden; border: 2px solid var(--background); border-radius: 50%; background: var(--background-alt); }
+      .paper-detail .liker-preview > span:not(:has(img)) { border-color: var(--border); }
+      .paper-detail .liker-preview img { width: 100%; height: 100%; object-fit: cover; }
+      .paper-likers-trigger { display: inline-flex; align-items: center; gap: .35rem; padding: .15rem .45rem; border: 1px solid var(--border); border-radius: .35rem; background: var(--background); color: var(--text-main); }
+      .paper-likers-trigger:hover { background: var(--background); }
+      .paper-likers-dialog { box-sizing: border-box; width: min(26rem, calc(100vw - 2rem)); max-height: min(70dvh, 32rem); overflow-y: auto; padding: 1rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--background-body); color: var(--text-main); }
+      .paper-likers-dialog::backdrop { background: #0008; }
+      .paper-likers-dialog > header:first-child { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; margin: 0 0 .5rem; padding: 0; border-radius: 0; background: transparent; text-align: left; }
+      .paper-likers-dialog h2 { min-width: 0; margin: 0; font-size: 1.2rem; line-height: 1.3; overflow-wrap: anywhere; }
+      .paper-likers-dialog header button { flex: none; width: 2rem; height: 2rem; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: .35rem; background: transparent; color: var(--text-main); font-size: 1.2rem; line-height: 1; }
+      .paper-likers-dialog ul { list-style: none; margin: 0; padding: 0; }
+      .paper-likers-dialog li + li { border-top: 1px solid var(--border); }
+      .paper-likers-dialog li a { display: flex; align-items: center; gap: .65rem; margin: 0 -.35rem; padding: .4rem .35rem; border-radius: .35rem; text-decoration: none; }
+      .paper-likers-dialog .profile-avatar { width: 2.5rem; height: 2.5rem; font-size: 1.15rem; }
+      .paper-likers-dialog li a:focus-visible { outline: 2px solid var(--links); outline-offset: 1px; text-decoration: underline; }
+      .paper-detail .comments { list-style: none; margin: 0; padding: 0; }
+      .paper-detail .comments li { padding: .55rem 0; border-top: 1px solid var(--border); }
+      .paper-detail .comments p { margin: .2rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .paper-detail textarea { box-sizing: border-box; width: 100%; margin: .5rem 0; }
+      .chat { --chat-gutter: 1rem; flex: 0 0 100dvh; min-height: 0; display: flex; flex-direction: column; }
+      .chat > header { padding: .5rem var(--chat-gutter); }
       .chat-heading { display: flex; align-items: flex-start; gap: .6rem; }
       .chat-heading-content { flex: 1; min-width: 0; }
       .chat-heading h1 { --edge-fade: 1.25rem; margin: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: none; font-size: 1.5rem; }
       .chat-heading h1 a { color: inherit; text-decoration: none; }
-      .chat-back { flex: none; padding: .15rem .5rem; border: 1px solid var(--border); border-radius: .35rem; text-decoration: none; }
-      .chat-context { display: flex; gap: .35rem; min-width: 0; margin: .1rem 0 .5rem; color: var(--text-muted, #666); font-size: .9rem; white-space: nowrap; }
+      .detail-nav { display: flex; align-items: center; gap: .3rem; flex: none; }
+      .chat-back { box-sizing: border-box; display: inline-flex; align-items: center; gap: .2rem; flex: none; min-height: 2rem; padding: .15rem .5rem; border: 1px solid var(--border); border-radius: .35rem; text-decoration: none; }
+      button.chat-back { margin: 0; background: transparent; color: var(--links); font: inherit; }
+      .detail-home { display: inline-flex; align-items: center; flex: none; min-height: 2rem; padding: 0 .5rem; border: 1px solid var(--border); border-radius: .35rem; background: var(--background-alt); color: var(--text-muted, #666); font-size: .9rem; text-decoration: none; }
+      .detail-home svg { display: none; width: 1.1rem; height: 1.1rem; }
+      .detail-home:focus-visible { outline: 2px solid var(--links); outline-offset: 2px; }
+      .chat-context { display: flex; gap: .35rem; min-width: 0; margin: .1rem 0 0; color: var(--text-muted, #666); font-size: .9rem; white-space: nowrap; }
       .chat-context span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
       .chat-context span:last-child { flex: none; }
-      .chat-log { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; border-block: 1px solid var(--border); padding: .5rem 1rem; }
+      .chat-log { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; scrollbar-gutter: stable; border-block: 1px solid var(--border); padding: .5rem var(--chat-gutter); }
       .chat-log.menu-open { overflow-y: hidden; touch-action: none; }
-      .messages { display: flex; flex-direction: column; gap: .5rem; list-style: none; margin: 0; padding: 0; }
+      .messages { display: flex; flex: none; flex-direction: column; gap: .5rem; list-style: none; margin: auto 0 0; padding: 0; }
       .messages li { display: flex; align-items: center; gap: .35rem; transition: opacity .15s ease; }
       .messages li.own { justify-content: flex-end; }
       .messages li.schedule-marker { justify-content: center; text-align: center; }
       .schedule-marker aside { max-width: 32rem; margin: .5rem; color: var(--text-muted, #666); font-size: .9rem; }
       .schedule-marker strong, .schedule-marker small { display: block; }
-      .message-bubble { box-sizing: border-box; width: fit-content; min-width: 0; max-width: min(80%, 32rem); margin: 0; padding: .55rem .8rem; border-radius: 1rem 1rem 1rem .25rem; background: var(--background-alt); }
+      .message-avatar { display: grid; place-items: center; align-self: flex-end; flex: none; width: 2rem; height: 2rem; overflow: hidden; border-radius: 50%; background: var(--background-alt); color: inherit; text-decoration: none; }
+      .message-avatar:not(:has(img)) { box-sizing: border-box; border: 1px solid var(--border); }
+      .message-avatar img { width: 100%; height: 100%; object-fit: cover; }
+      .messages li.own .message-avatar { order: 1; }
+      .message-bubble { box-sizing: border-box; width: fit-content; min-width: 0; max-width: min(calc(100% - 5rem), 32rem); margin: 0; padding: .55rem .8rem; border-radius: 1rem 1rem 1rem .25rem; background: var(--background-alt); }
       .messages li.own .message-bubble { border-radius: 1rem 1rem .25rem 1rem; background: color-mix(in srgb, var(--links) 16%, var(--background)); }
-      .messages header { font-size: .9em; }
+      .messages header { overflow-wrap: anywhere; font-size: .9em; }
+      .messages header a { color: var(--links); text-decoration: none; }
       .messages time { color: var(--text-muted, #666); font-size: .85em; }
       .messages p { margin: .2rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
       .messages footer { display: flex; justify-content: flex-start; align-items: center; gap: .3rem; min-height: 1.25rem; }
@@ -141,7 +259,7 @@
         .delivery-status.sending { animation: none; border-top-color: currentColor; }
         .messages li { transition: none; }
       }
-      .chat-suggestions { --edge-fade: 2rem; display: flex; align-items: center; gap: .25rem; min-width: 0; padding: .5rem 1rem 0; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; scrollbar-width: none; }
+      .chat-suggestions { --edge-fade: 2rem; display: flex; align-items: center; gap: .25rem; min-width: 0; padding: .5rem var(--chat-gutter) 0; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; scrollbar-width: none; }
       .chat-suggestions > span { flex: none; color: var(--text-muted, #666); font-size: .8rem; }
       .chat-suggestions::-webkit-scrollbar, .chat-title::-webkit-scrollbar { display: none; }
       .chat-suggestions.more-left, .chat-title.more-left { mask-image: linear-gradient(to right, transparent, black var(--edge-fade)); }
@@ -152,24 +270,38 @@
       @media (hover: hover) and (pointer: fine) {
         .room-list a:hover { background: var(--button-hover); }
         .inactive-rooms a:hover, .chat-suggestions button:hover { background: var(--background-alt); }
-        .profile-card a:hover { background: var(--button-hover); }
+        .people-filters label:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--accent) 25%, var(--background)); }
+        .people-filters label:hover { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+        .profile-card:hover { border-color: var(--links); background: color-mix(in srgb, var(--links) 5%, var(--background-alt)); box-shadow: 0 0 0 1px var(--links); }
+        .paper-list a:hover { border-color: var(--links); background: color-mix(in srgb, var(--links) 5%, var(--background-alt)); }
+        .paper-read:hover { filter: brightness(.9); color: white; }
+        .paper-acm:hover { background: var(--background-alt); color: var(--links); }
+        .paper-room-chat:hover { background: color-mix(in srgb, var(--links) 20%, var(--background)); box-shadow: 0 0 0 1px var(--links); }
+        .paper-likers-trigger:hover, .paper-likers-dialog header button:hover { border-color: var(--links); background: var(--background-alt); }
+        .paper-likers-dialog li a:hover { background: color-mix(in srgb, var(--links) 8%, var(--background-body)); text-decoration: underline; }
+        .messages header a:hover { text-decoration: underline; }
+        .profile-actions .profile-edit:hover { filter: brightness(.9); }
         .chat-heading h1 a:hover { text-decoration: underline; }
+        .chat-back:hover { border-color: var(--links); background: var(--background-alt); }
+        .detail-home:hover { border-color: var(--text-muted, #666); color: var(--text-main); }
         .message-actions-trigger:hover { background: var(--button-hover); }
       }
-      .chat form { display: flex; align-items: flex-end; gap: .5rem; margin: 0; padding: .75rem 1rem 1rem; }
-      .chat-suggestions + form { padding-top: .5rem; }
-      .chat form.login-form { padding: .5rem; }
-      .chat form.login-form button { flex: 1; }
+      .chat form { display: flex; align-items: flex-end; gap: .5rem; margin: 0; padding: .5rem var(--chat-gutter); }
+      .chat form.composer-gate { align-items: stretch; }
+      .chat form.composer-gate > a { box-sizing: border-box; flex: 1; padding: .6rem; border: 1px solid var(--links); border-radius: .35rem; background: var(--links); color: white; text-align: center; text-decoration: none; }
       .chat form textarea { box-sizing: border-box; flex: 1; min-width: 0; min-height: 2.5rem; max-height: 9rem; margin: 0; resize: none; overflow-y: auto; }
       .chat form button { margin: 0; }
       @media (max-width: 40rem) {
-        .chat > header { padding: .5rem .65rem 0; }
+        .chat { --chat-gutter: .65rem; }
+        .chat > header { padding-block: .35rem; }
         .chat-heading { gap: .4rem; }
-        .chat-context { margin-bottom: .3rem; }
-        .chat-log { padding: .35rem .65rem; }
-        .chat-suggestions { --edge-fade: 1.5rem; padding: .3rem .65rem 0; }
-        .chat form { padding: .45rem .65rem .6rem; }
-        .chat-suggestions + form { padding-top: .35rem; }
+        .chat-heading h1 { font-size: 1.25rem; line-height: 2rem; }
+        .detail-nav .chat-back, .detail-nav .detail-home { justify-content: center; width: 2rem; height: 2rem; padding: 0; }
+        .detail-nav .nav-label { display: none; }
+        .detail-home svg { display: block; }
+        .chat-log { padding-block: .35rem; }
+        .chat-suggestions { --edge-fade: 1.5rem; padding-top: .3rem; }
+        .chat form { padding-block: .35rem; }
       }
     </style>
     <script type="module">
@@ -186,6 +318,7 @@
       const hallwayChannel = "cscw-meta:2026:hallway:v1";
       // Profiles are discoverable through this conference directory.
       const profilesChannel = "cscw-meta:2026:people:v1";
+      const maxPhotoBytes = 8 * 1024 * 1024;
       const programListUrl = "https://files.sigchi.org/conference/cache/program-list";
       const roomSuggestions = [
         { label: "Meet after", draft: "Anyone want to meet after this session to discuss " },
@@ -226,6 +359,120 @@
           },
         },
       };
+      const likeSchema = {
+        properties: { value: {
+          type: "object", required: ["action", "paper", "time"],
+          properties: {
+            action: { const: "Like paper" },
+            paper: { type: "number" },
+            time: { type: "number" },
+          },
+        } },
+      };
+      const paperActivitySchema = {
+        properties: { value: {
+          type: "object", required: ["time"],
+          anyOf: [
+            { required: ["action", "paper"], properties: {
+              action: { const: "Like paper" }, paper: { type: "number" },
+            } },
+            { required: ["comment"], properties: { comment: { type: "string", minLength: 1 } } },
+          ],
+          properties: { time: { type: "number" } },
+        } },
+      };
+      function programHref(id) { return `?/program/${id}`; }
+      function paperChannel(id) { return `cscw-meta:2026:paper:${id}:v1`; }
+      function comparableText(value) {
+        return String(value || "").normalize("NFKD").replace(/\p{M}/gu, "")
+          .toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim().replace(/\s+/g, " ");
+      }
+      function matchesPaperTitle(candidate, title) {
+        const publicationTitle = comparableText(candidate);
+        const programTitle = comparableText(title);
+        return publicationTitle === programTitle ||
+          (publicationTitle.startsWith(`${programTitle} `) &&
+            /^cscw ?\d+[a-z]?$/.test(publicationTitle.slice(programTitle.length + 1)));
+      }
+      function authorNames(content, peopleById) {
+        return (content.authors || []).map((author) => peopleById.get(author.personId))
+          .filter(Boolean).map((person) =>
+            [person.firstName, person.middleInitial, person.lastName].filter(Boolean).join(" "))
+          .join(", ");
+      }
+      function contentKind(content, typesById) {
+        const category = typesById.get(content.typeId ?? content.contentTypeId);
+        return category?.displayName || category?.name || "";
+      }
+      function isPaperLike(content, typesById) {
+        return !!content && /paper|poster|workshop/i.test(contentKind(content, typesById));
+      }
+      function isPaperPresentation(content, typesById) {
+        return !!content && /\bpapers?\b/i.test(contentKind(content, typesById));
+      }
+      function presentationSlots(sessions, paperId, contentsById, typesById) {
+        return sessions.filter((item) => item.contentIds?.includes(paperId))
+          .map((item) => {
+            const contents = item.contentIds.map((id) => contentsById.get(id));
+            const durations = contents.map((content) => content?.durationOverride ??
+              typesById.get(content?.typeId ?? content?.contentTypeId)?.duration);
+            const exact = Number.isFinite(item.startDate) && Number.isFinite(item.endDate) &&
+              (contents.length === 1 || (contents.length > 1 && !item.isParallelPresentation &&
+                durations.every((duration) => Number.isFinite(duration) && duration > 0) &&
+                durations.reduce((sum, duration) => sum + duration, 0) * 60000 ===
+                  item.endDate - item.startDate));
+            const index = item.contentIds.indexOf(paperId);
+            return {
+              ...item,
+              presentationStart: exact ? item.startDate +
+                durations.slice(0, index).reduce((sum, duration) => sum + duration, 0) * 60000 : null,
+              presentationEnd: exact && contents.length > 1 ? item.startDate +
+                durations.slice(0, index + 1).reduce((sum, duration) => sum + duration, 0) * 60000 :
+                exact ? item.endDate : null,
+            };
+          })
+          .sort((a, b) => (a.startDate ?? Infinity) - (b.startDate ?? Infinity));
+      }
+      function abstractText(content) {
+        const raw = content?.abstract;
+        if (typeof raw !== "string") return "";
+        const spaced = raw.replace(/<[^>]+>/g, " ");
+        return new DOMParser().parseFromString(spaced, "text/html").body.textContent
+          ?.replace(/\s+/g, " ").trim() || "";
+      }
+      function acmHref(content) {
+        const links = [content.addons?.doi?.url, content.url, content.link, content.paperUrl,
+          content.pdfUrl,
+          content.publicationUrl, content.doiUrl, content.acmUrl,
+          ...(Array.isArray(content.links) ? content.links.map((link) =>
+            typeof link === "string" ? link : link?.url) : [])];
+        const acmLink = links.find((link) => typeof link === "string" &&
+          /^https:\/\/dl\.acm\.org\/doi\/(?:pdf\/|abs\/)?10\.1145\//i.test(link));
+        if (acmLink) return acmLink.replace(/\/doi\/(?:pdf\/|abs\/)/i, "/doi/");
+        const doi = [content.addons?.doi?.url, content.doi, content.DOI]
+          .find((value) => typeof value === "string")?.trim()
+          .replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, "");
+        return /^10\.1145\/\S+$/.test(doi || "")
+          ? `https://dl.acm.org/doi/${doi.split("/").map(encodeURIComponent).join("/")}` : "";
+      }
+      function readPaperHref(content) {
+        // Prefer a supplied PDF; ACM DOI links can be opened at its PDF endpoint.
+        const addonFiles = Object.entries(content.addons || {})
+          .filter(([name]) => /paper|poster|pdf|manuscript|proceedings|full.text/i.test(name))
+          .map(([, addon]) => addon?.url);
+        const directPdf = [content.pdfUrl, content.paperUrl, content.url, content.link,
+          ...addonFiles, ...(Array.isArray(content.links) ? content.links.map((link) =>
+            typeof link === "string" ? link : link?.url) : [])].find((url) =>
+          typeof url === "string" && /^https:\/\//i.test(url) &&
+          /(?:\.pdf(?:[?#]|$)|\/doi\/pdf\/)/i.test(url));
+        if (directPdf) return directPdf;
+        const acm = acmHref(content);
+        if (/^https:\/\/dl\.acm\.org\/doi\/pdf\//i.test(acm)) return acm;
+        const pdf = acm.replace(/^(https:\/\/dl\.acm\.org)\/doi\/(?:abs\/)?(10\.1145\/)/i,
+          "$1/doi/pdf/$2");
+        return pdf;
+      }
+      const paperLinkCache = new Map();
       // Stable actor addresses let people share profiles directly.
       function profileHref(actor) {
         return `?/people/profile/${encodeURIComponent(actor)}`;
@@ -239,28 +486,36 @@
         props: {
           channel: { type: String, required: true },
           title: { type: String, required: true },
+          profiles: { type: Array, required: true },
+          profilesLoading: { type: Boolean, required: true },
+          profilesError: { type: Object, default: null },
           href: { type: String, default: "" },
           backHref: { type: String, default: "" },
           context: { type: Object, default: null },
           markers: { type: Array, default: () => [] },
           markerTimeZone: { type: String, default: "" },
           suggestions: { type: Array, default: () => [] },
+          navigationState: { type: Map, required: true },
           // Only the active room should run the expensive live poll.
           autopoll: { type: Boolean, default: false },
         },
-        setup(props) {
+        emits: ["detail-back"],
+        setup(props, { emit }) {
           const graffiti = useGraffiti();
           const session = useGraffitiSession();
           const { objects, isFirstPoll, error: discoveryError } = useGraffitiDiscover(
             () => [props.channel], messageSchema, undefined, () => props.autopoll,
           );
-          const draft = ref("");
-          const untouchedSuggestion = ref("");
+          // A current public profile is required for both displaying and sending messages.
+          const profileByActor = computed(() => new Map(props.profiles.map((profile) =>
+            [profile.actor, profile])));
+          const myProfile = computed(() => profileByActor.value.get(session.value?.actor));
+          const previousView = props.navigationState.get(props.channel);
+          const draft = ref(previousView?.draft || "");
+          const untouchedSuggestion = ref(previousView?.untouchedSuggestion || "");
           const canSend = computed(() => !!draft.value.trim() &&
             draft.value.trim() !== untouchedSuggestion.value.trim());
           const pending = ref([]);
-          const accountBusy = ref(false);
-          const accountError = ref("");
           const messageList = ref(null);
           const messageInput = ref(null);
           const deletingUrls = reactive(new Set());
@@ -311,7 +566,8 @@
           // Keep an optimistic copy until discovery contains the saved object.
           // Consecutive local sends get distinct timestamps for matching.
           const messageItems = computed(() => {
-            const saved = objects.value.filter((object) => !deletedUrls.has(object.url))
+            const saved = objects.value.filter((object) =>
+              profileByActor.value.has(object.actor) && !deletedUrls.has(object.url))
               .map((object) => ({
                 key: object.url,
                 url: object.url,
@@ -324,6 +580,7 @@
               `${message.actor}\u0000${message.content}\u0000${message.time}`
             ));
             return [...saved, ...pending.value.filter((message) =>
+              profileByActor.value.has(message.actor) &&
               !deletedUrls.has(message.url) &&
               !savedMessages.has(`${message.actor}\u0000${message.content}\u0000${message.time}`)
             )].sort((a, b) => a.time - b.time ||
@@ -338,32 +595,51 @@
             timeZone: props.markerTimeZone || undefined,
           }));
 
-          onMounted(() => {
+          let initialScrollRestored = false;
+          function rememberChatState() {
             const log = messageList.value;
-            if (log) log.scrollTop = log.scrollHeight;
+            const currentView = props.navigationState.get(props.channel);
+            props.navigationState.set(props.channel, {
+              draft: draft.value,
+              untouchedSuggestion: untouchedSuggestion.value,
+              scrollTop: log?.scrollTop ?? currentView?.scrollTop ?? previousView?.scrollTop ?? 0,
+              atBottom: log ? log.scrollHeight - log.scrollTop - log.clientHeight < 96
+                : currentView?.atBottom ?? previousView?.atBottom ?? true,
+            });
+          }
+          onScopeDispose(rememberChatState);
+          watch([draft, untouchedSuggestion], rememberChatState);
+          async function restoreChatScroll() {
+            if (initialScrollRestored || isFirstPoll.value || props.profilesLoading) return;
+            await nextTick();
+            const log = messageList.value;
+            if (!log || initialScrollRestored) return;
+            log.scrollTop = !previousView || previousView.atBottom
+              ? log.scrollHeight : previousView.scrollTop;
+            initialScrollRestored = true;
+          }
+          onMounted(() => {
+            restoreChatScroll();
+            nextTick(resizeComposer);
           });
+          watch([isFirstPoll, () => props.profilesLoading, () => timelineItems.value.length],
+            restoreChatScroll, { flush: "post" });
           watch(messageInput, (input) => {
-            input?.focus({ preventScroll: true });
+            input?.focus();
           }, { flush: "post" });
           watch(() => timelineItems.value.length, async () => {
             const log = messageList.value;
             if (!log) return;
+            const wasRestored = initialScrollRestored;
             const nearBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 96;
             await nextTick();
-            if (nearBottom) log.scrollTop = log.scrollHeight;
+            if (wasRestored && nearBottom) log.scrollTop = log.scrollHeight;
           });
-
-          async function logIn() {
-            accountBusy.value = true;
-            accountError.value = "";
-            try { await graffiti.login(); }
-            catch (error) { accountError.value = error.message || "Could not log in."; }
-            finally { accountBusy.value = false; }
-          }
 
           async function postMessage(message) {
             const currentSession = session.value;
-            if (!currentSession || currentSession.actor !== message.actor) return;
+            if (!currentSession || currentSession.actor !== message.actor ||
+              !profileByActor.value.has(message.actor)) return;
             message.status = "sending";
             message.error = "";
             try {
@@ -384,7 +660,7 @@
 
           function sendMessage() {
             const content = draft.value.trim();
-            if (!session.value || !canSend.value || content.length > 1000) return;
+            if (!session.value || !myProfile.value || !canSend.value || content.length > 1000) return;
             closeActions();
             lastMessageTime = Math.max(Date.now(), lastMessageTime + 1);
             const message = reactive({
@@ -590,8 +866,9 @@
           }
 
           return {
-            session, isFirstPoll, discoveryError, draft, canSend, accountBusy,
-            accountError, messageList, messageInput, messageItems, timelineItems, logIn,
+            session, isFirstPoll, discoveryError, profileByActor, myProfile,
+            profileHref, programHref, editorHref, maxPhotoBytes, draft, canSend,
+            messageList, messageInput, messageItems, timelineItems,
             suggestionList, suggestionsMoreLeft, suggestionsMoreRight, updateSuggestionEdges,
             sessionTitle, sessionMoreLeft, sessionMoreRight, updateSessionEdges,
             sendMessage, useSuggestion, resizeComposer, onComposerKeydown, postMessage,
@@ -600,6 +877,7 @@
             openActionsFromButton, deleteFromMenu, closeActions, actionMenu,
             actionMenuButton, deletingUrls, deleteErrors,
             formatTime, formatMarkerTime, dateTime, textParts, isLink, deliveryLabel,
+            rememberChatState, goBack: () => emit("detail-back", props.backHref),
           };
         },
       };
@@ -607,6 +885,12 @@
       const PeopleDirectory = {
         template: "#people-directory-template",
         props: {
+          profileObjects: { type: Array, required: true },
+          latestProfiles: { type: Array, required: true },
+          profilesLoading: { type: Boolean, required: true },
+          profilesError: { type: Object, default: null },
+          loginError: { type: String, default: "" },
+          loginBusy: { type: Boolean, default: false },
           program: { type: Object, default: null },
           programLoading: { type: Boolean, default: false },
           programError: { type: String, default: "" },
@@ -614,24 +898,16 @@
           profileRoute: { type: Boolean, default: false },
           profileActor: { type: String, default: "" },
         },
-        emits: ["saved", "removed"],
+        emits: ["saved", "removed", "profile-back", "detail-back", "open-editor"],
         setup(props, { emit }) {
           const graffiti = useGraffiti();
           const session = useGraffitiSession();
-          const { objects, isFirstPoll, error: discoveryError } = useGraffitiDiscover(
-            [profilesChannel], profileSchema, undefined, true,
-          );
+          const objects = computed(() => props.profileObjects);
+          const isFirstPoll = computed(() => props.profilesLoading);
+          const discoveryError = computed(() => props.profilesError);
           const profiles = computed(() => {
-            const latest = new Map();
-            for (const profile of objects.value) {
-              const previous = latest.get(profile.actor);
-              if (!previous || profile.value.time > previous.value.time ||
-                (profile.value.time === previous.value.time && profile.url > previous.url)) {
-                latest.set(profile.actor, profile);
-              }
-            }
             const ownActor = session.value?.actor;
-            return [...latest.values()].sort((a, b) =>
+            return [...props.latestProfiles].sort((a, b) =>
               Number(b.actor === ownActor) - Number(a.actor === ownActor) ||
               a.value.name.localeCompare(b.value.name));
           });
@@ -639,13 +915,18 @@
             profile.actor === session.value?.actor));
           const selectedProfile = computed(() => profiles.value.find((profile) =>
             profile.actor === props.profileActor));
+          const { objects: profileLikes, isFirstPoll: likesLoading,
+            error: likesError } = useGraffitiDiscover(
+            () => props.profileRoute && props.profileActor ? [props.profileActor] : [],
+            likeSchema,
+          );
           const search = ref("");
-          const presentersOnly = ref(false);
+          const onProgramOnly = ref(false);
           const meetingOnly = ref(false);
           const visibleProfiles = computed(() => {
             const query = search.value.trim().toLowerCase();
             return profiles.value.filter((profile) => {
-              if (presentersOnly.value && !profile.value["presentation IDs"]?.length) return false;
+              if (onProgramOnly.value && !profile.value["presentation IDs"]?.length) return false;
               if (meetingOnly.value && !profile.value["open to meeting"]) return false;
               return !query || [
                 profile.value.name,
@@ -658,6 +939,7 @@
 
           const editing = ref(false);
           const name = ref("");
+          const nameInput = ref(null);
           const pronouns = ref("");
           const interests = ref("");
           const openToMeeting = ref(null);
@@ -671,14 +953,46 @@
           const busy = ref(false);
           const error = ref("");
           const notice = ref("");
-          const maxPhotoBytes = 8 * 1024 * 1024;
 
           const programPeople = computed(() => new Map((props.program?.people || [])
             .map((person) => [person.id, person])));
           const programContents = computed(() => new Map((props.program?.contents || [])
             .map((content) => [content.id, content])));
+          const programTypes = computed(() => new Map((props.program?.contentTypes || [])
+            .map((item) => [item.id, item])));
+          const programRooms = computed(() => new Map((props.program?.rooms || [])
+            .map((room) => [room.id, room])));
+          const scheduleFormatter = computed(() => new Intl.DateTimeFormat(undefined, {
+            weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+            timeZoneName: "short",
+            timeZone: props.program?.conference?.timeZoneName || "America/Denver",
+          }));
+          const likedPapers = computed(() => {
+            const newest = new Map();
+            for (const like of profileLikes.value) {
+              if (like.actor !== props.profileActor) continue;
+              const id = like.value.paper;
+              if (!programContents.value.has(id)) continue;
+              if (!newest.has(id) || like.value.time > newest.get(id).value.time)
+                newest.set(id, like);
+            }
+            return [...newest.values()].map((like) => {
+              const paper = programContents.value.get(like.value.paper);
+              const slots = presentationSlots(props.program?.sessions || [], paper.id,
+                programContents.value, programTypes.value);
+              return { paper, slots, firstTime: slots[0]?.presentationStart ??
+                slots[0]?.startDate ?? Infinity };
+            }).sort((a, b) => a.firstTime - b.firstTime ||
+              a.paper.title.localeCompare(b.paper.title));
+          });
+          function scheduleLabel(slot) {
+            const start = slot.presentationStart ?? slot.startDate;
+            if (!Number.isFinite(start)) return "Time to be announced";
+            return `${slot.presentationStart === null ? "Session starts " : ""}${scheduleFormatter.value.format(new Date(start))}`;
+          }
+          function scheduleRoom(slot) { return programRooms.value.get(slot.roomId)?.name || ""; }
           function presentationTitle(id) {
-            return programContents.value.get(id)?.title || `Presentation ${id}`;
+            return programContents.value.get(id)?.title || `Program item ${id}`;
           }
           function authorNames(content) {
             return (content.authors || []).map((author) => programPeople.value.get(author.personId))
@@ -696,6 +1010,24 @@
           }
           function isResearchLink(part) {
             return /^https?:\/\//.test(part);
+          }
+          function contactParts(text) {
+            const content = String(text || "");
+            const parts = [];
+            const links = /https?:\/\/[^\s<>"']+|www\.[^\s<>"']+|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+            let previous = 0;
+            for (const match of content.matchAll(links)) {
+              const value = match[0].replace(/[.,!?;:)\]]+$/, "");
+              if (match.index > previous) parts.push({ text: content.slice(previous, match.index) });
+              parts.push({
+                text: value,
+                href: /^www\./i.test(value) ? `https://${value}` :
+                  /^https?:\/\//i.test(value) ? value : `mailto:${value}`,
+              });
+              previous = match.index + value.length;
+            }
+            if (previous < content.length) parts.push({ text: content.slice(previous) });
+            return parts;
           }
           const matchingPresentations = computed(() => {
             const query = presentationSearch.value.trim().toLowerCase();
@@ -754,6 +1086,9 @@
             error.value = "";
             notice.value = "";
             editing.value = true;
+            if (!value) nextTick(() => {
+              if (props.editorRoute && editing.value) nameInput.value?.focus();
+            });
           }
           function cancelEdit() {
             editing.value = false;
@@ -769,7 +1104,11 @@
             try { await graffiti.login(); }
             catch (cause) { error.value = cause.message || "Could not log in."; }
           }
-          function openEditor() { window.navigate(editorHref); }
+          function openEditor() { emit("open-editor", editorHref); }
+          function goBackFromProfile() { emit("profile-back"); }
+          function goBackFromEditor() {
+            emit("detail-back", myProfile.value ? profileHref(myProfile.value.actor) : "?/people");
+          }
           const ownVersions = () => objects.value.filter((profile) =>
             profile.actor === session.value?.actor);
           async function retireVersions(versions, currentPicture) {
@@ -857,25 +1196,692 @@
 
           return {
             session, isFirstPoll, discoveryError, profiles, myProfile, selectedProfile,
-            search, presentersOnly, meetingOnly, visibleProfiles, profileHref, editorHref,
-            editing, name, pronouns, interests, openToMeeting,
+            search, onProgramOnly, meetingOnly, visibleProfiles, profileHref, editorHref,
+            editing, name, nameInput, pronouns, interests, openToMeeting,
             contact, presentations, presentationSearch, matchingPresentations,
             presentationMatches,
             photoFile, photoPreview, photoInput, removePhoto, busy, error, notice,
             maxPhotoBytes, presentationTitle, presentationAuthors,
-            researchParts, isResearchLink,
+            programHref, likedPapers, likesLoading, likesError, scheduleLabel, scheduleRoom,
+            researchParts, isResearchLink, contactParts,
             addPresentation, removePresentation, selectPhoto, openEditor,
+            goBackFromProfile, goBackFromEditor,
             startEdit, cancelEdit, clearPhoto, logIn, saveProfile, removeProfile,
           };
         },
       };
 
+      const ProgramView = {
+        template: "#program-template",
+        props: {
+          program: { type: Object, default: null },
+          programLoading: { type: Boolean, required: true },
+          programError: { type: String, default: "" },
+          paperId: { type: Number, default: null },
+          search: { type: String, default: "" },
+          browseState: { type: Object, required: true },
+          now: { type: Number, required: true },
+          profiles: { type: Array, required: true },
+          profilesLoading: { type: Boolean, required: true },
+          profilesError: { type: Object, default: null },
+        },
+        emits: ["update:search", "detail-back"],
+        setup(props, { emit }) {
+          const graffiti = useGraffiti();
+          const session = useGraffitiSession();
+          const search = computed({
+            get: () => props.search,
+            set: (value) => emit("update:search", value),
+          });
+          const dayPicker = ref(null);
+          const dayMoreLeft = ref(false);
+          const dayMoreRight = ref(false);
+          function updateDayEdges() {
+            const row = dayPicker.value;
+            if (!row) return;
+            dayMoreLeft.value = row.scrollLeft > 1;
+            dayMoreRight.value = row.scrollLeft + row.clientWidth < row.scrollWidth - 1;
+          }
+          const dayObserver = new ResizeObserver(updateDayEdges);
+          watch(dayPicker, (row, previous) => {
+            if (previous) dayObserver.unobserve(previous);
+            if (row) { dayObserver.observe(row); nextTick(updateDayEdges); }
+          });
+          onScopeDispose(() => dayObserver.disconnect());
+          const visibleLimit = computed({
+            get: () => props.browseState.visibleLimit,
+            set: (value) => { props.browseState.visibleLimit = value; },
+          });
+          const papersOnly = computed({
+            get: () => props.browseState.papersOnly,
+            set: (value) => { props.browseState.papersOnly = value; },
+          });
+          const hidePast = computed({
+            get: () => props.browseState.hidePast,
+            set: (value) => { props.browseState.hidePast = value; },
+          });
+          const draft = ref("");
+          const pendingComments = ref([]);
+          const deletedComments = reactive(new Set());
+          const busyComments = reactive(new Set());
+          const activityError = ref("");
+          const likeBusy = ref(false);
+          const desiredLike = ref(null);
+          const localLike = ref(null);
+          const likersDialog = ref(null);
+          const likersOpen = ref(false);
+          const deletedLikeUrls = reactive(new Set());
+          let lastCommentTime = 0;
+          const typesById = computed(() => new Map((props.program?.contentTypes || [])
+            .map((item) => [item.id, item])));
+          const peopleById = computed(() => new Map((props.program?.people || [])
+            .map((item) => [item.id, item])));
+          const roomsById = computed(() => new Map((props.program?.rooms || [])
+            .map((room) => [room.id, room])));
+          const profileByActor = computed(() => new Map(props.profiles.map((profile) =>
+            [profile.actor, profile])));
+          const myProfile = computed(() => profileByActor.value.get(session.value?.actor));
+          const { objects: ownPaperLikes, isFirstPoll: browseLikesLoading,
+            error: browseLikesError } = useGraffitiDiscover(
+            () => props.paperId === null && session.value?.actor ? [session.value.actor] : [],
+            likeSchema,
+          );
+          const browseLocalLikes = reactive(new Map());
+          const browseDesiredLikes = reactive(new Map());
+          const browseDeletedLikeUrls = reactive(new Set());
+          const browseLikeBusy = reactive(new Set());
+          const browseLikeError = ref("");
+          const browseLikesByPaper = computed(() => {
+            const byPaper = new Map();
+            for (const like of [...ownPaperLikes.value, ...browseLocalLikes.values()]) {
+              if (like.actor !== session.value?.actor || browseDeletedLikeUrls.has(like.url)) continue;
+              if (!byPaper.has(like.value.paper)) byPaper.set(like.value.paper, new Map());
+              byPaper.get(like.value.paper).set(like.url, like);
+            }
+            return byPaper;
+          });
+          function browseIsLiked(id) {
+            return browseDesiredLikes.has(id) ? browseDesiredLikes.get(id) :
+              !!browseLikesByPaper.value.get(id)?.size;
+          }
+          async function toggleBrowseLike(id) {
+            if (!session.value || !myProfile.value || browseLikesLoading.value ||
+              browseLikesError.value || browseLikeBusy.has(id)) return;
+            const next = !browseIsLiked(id);
+            browseDesiredLikes.set(id, next);
+            browseLikeBusy.add(id);
+            browseLikeError.value = "";
+            try {
+              if (next) {
+                browseLocalLikes.set(id, await graffiti.post({
+                  value: { action: "Like paper", paper: id, time: Date.now() },
+                  channels: [paperChannel(id), session.value.actor],
+                }, session.value));
+              } else {
+                const own = [...(browseLikesByPaper.value.get(id)?.values() || [])];
+                await Promise.all(own.map((like) => graffiti.delete(like, session.value)));
+                own.forEach((like) => browseDeletedLikeUrls.add(like.url));
+                browseLocalLikes.delete(id);
+              }
+            } catch (error) {
+              browseLikeError.value = error.message || "Could not update your like.";
+            } finally {
+              browseDesiredLikes.delete(id);
+              browseLikeBusy.delete(id);
+            }
+          }
+          const sessionsByContent = computed(() => {
+            const sessions = new Map();
+            for (const item of props.program?.sessions || []) {
+              for (const id of item.contentIds || []) {
+                if (!sessions.has(id)) sessions.set(id, []);
+                sessions.get(id).push(item);
+              }
+            }
+            return sessions;
+          });
+          function isCurrentOrFuture(item) {
+            return !Number.isFinite(item.endDate) || item.endDate > props.now;
+          }
+          // Sessions without content still appear in the full day browser.
+          const papers = computed(() => (props.program?.contents || []).filter((item) =>
+            Number.isFinite(item.id) && typeof item.title === "string" && item.title.trim()
+          ).sort((a, b) => a.title.localeCompare(b.title)));
+          const sessionNamesByContent = computed(() => new Map(
+            [...sessionsByContent.value].map(([id, sessions]) =>
+              [id, sessions.map((item) => item.name).filter(Boolean)])));
+          const filteredPapers = computed(() => {
+            const query = search.value.trim().toLowerCase();
+            return !query ? papers.value : papers.value.filter((paper) =>
+              (`${paper.title} ${paper.abstract || ""} ${authorNames(paper, peopleById.value)}` +
+                ` ${(sessionNamesByContent.value.get(paper.id) || []).join(" ")}`)
+                .toLowerCase().includes(query));
+          });
+          const matchingEmptySessions = computed(() => {
+            const query = search.value.trim().toLowerCase();
+            if (!query) return [];
+            return (props.program?.sessions || []).filter((item) =>
+              !(item.contentIds || []).length && item.name?.toLowerCase().includes(query))
+              .sort((a, b) => (a.startDate ?? Infinity) - (b.startDate ?? Infinity));
+          });
+          const visiblePapers = computed(() => filteredPapers.value.slice(0, visibleLimit.value));
+          watch(search, () => { visibleLimit.value = 60; });
+          const conferenceTimeZone = computed(() =>
+            props.program?.conference?.timeZoneName || "America/Denver");
+          const dayKeyFormatter = computed(() => new Intl.DateTimeFormat("en-US", {
+            year: "numeric", month: "2-digit", day: "2-digit",
+            timeZone: conferenceTimeZone.value,
+          }));
+          const dayLabelFormatter = computed(() => new Intl.DateTimeFormat(undefined, {
+            weekday: "long", month: "short", day: "numeric",
+            timeZone: conferenceTimeZone.value,
+          }));
+          const shortDayLabelFormatter = computed(() => new Intl.DateTimeFormat("en-US", {
+            weekday: "short", month: "short", day: "numeric",
+            timeZone: conferenceTimeZone.value,
+          }));
+          const sessionClockFormatter = computed(() => new Intl.DateTimeFormat(undefined, {
+            hour: "numeric", minute: "2-digit", timeZone: conferenceTimeZone.value,
+          }));
+          function dayKey(timestamp) {
+            const parts = Object.fromEntries(dayKeyFormatter.value.formatToParts(new Date(timestamp))
+              .map((part) => [part.type, part.value]));
+            return `${parts.year}-${parts.month}-${parts.day}`;
+          }
+          const browseDays = computed(() => {
+            const paperById = new Map(papers.value.map((paper) => [paper.id, paper]));
+            const assignedIds = new Set();
+            const dated = new Map();
+            const undated = [];
+            for (const [index, session] of (props.program?.sessions || []).entries()) {
+              const seen = new Set();
+              const sessionPapers = (session.contentIds || []).map((id) => paperById.get(id))
+                .filter((paper) => {
+                  if (!paper || seen.has(paper.id)) return false;
+                  seen.add(paper.id);
+                  assignedIds.add(paper.id);
+                  return true;
+                });
+              const group = { ...session, key: `session:${session.id ?? index}`,
+                papers: sessionPapers };
+              if (!Number.isFinite(session.startDate)) {
+                undated.push(group);
+                continue;
+              }
+              const key = dayKey(session.startDate);
+              if (!dated.has(key)) dated.set(key, {
+                key, label: shortDayLabelFormatter.value.format(new Date(session.startDate)),
+                fullLabel: dayLabelFormatter.value.format(new Date(session.startDate)),
+                sessions: [],
+              });
+              dated.get(key).sessions.push(group);
+            }
+            const days = [...dated.values()].sort((a, b) => a.key.localeCompare(b.key));
+            for (const day of days) day.sessions.sort((a, b) =>
+              a.startDate - b.startDate || String(a.name || "").localeCompare(b.name || ""));
+            const unassigned = papers.value.filter((paper) => !assignedIds.has(paper.id));
+            undated.sort((a, b) => String(a.name || "").localeCompare(b.name || ""));
+            if (unassigned.length) undated.push({
+              key: "other-items", name: "Other program items", papers: unassigned,
+            });
+            if (undated.length) days.push({
+              key: "unscheduled", label: "Unscheduled", sessions: undated,
+            });
+            return days;
+          });
+          watch(browseDays, () => nextTick(updateDayEdges), { flush: "post" });
+          watch(browseDays, (days) => {
+            if (!days.length || days.some((day) => day.key === props.browseState.day)) return;
+            const today = dayKey(props.now);
+            const dated = days.filter((day) => day.key !== "unscheduled");
+            props.browseState.day = dated.find((day) => day.key === today)?.key ||
+              dated.find((day) => day.key > today)?.key ||
+              dated.at(-1)?.key || days[0].key;
+          }, { immediate: true });
+          const selectedBrowseDay = computed(() => browseDays.value.find((day) =>
+            day.key === props.browseState.day));
+          const selectedDayHasUpcoming = computed(() =>
+            selectedBrowseDay.value?.sessions.some(isCurrentOrFuture) || false);
+          const selectedBrowseSessions = computed(() =>
+            (selectedBrowseDay.value?.sessions || []).filter((item) =>
+              !hidePast.value || isCurrentOrFuture(item)).map((item) => ({
+                ...item,
+                papers: papersOnly.value ? item.papers.filter((paper) =>
+                  isPaperPresentation(paper, typesById.value)) : item.papers,
+              })).filter((item) => !papersOnly.value || item.papers.length));
+          const selectedTimeBlocks = computed(() => {
+            const blocks = new Map();
+            for (const session of selectedBrowseSessions.value) {
+              const key = Number.isFinite(session.startDate) ? session.startDate : "unscheduled";
+              if (!blocks.has(key)) blocks.set(key, { key, startDate: session.startDate, sessions: [] });
+              blocks.get(key).sessions.push(session);
+            }
+            return [...blocks.values()];
+          });
+          function sharedBlockEnd(block) {
+            const end = block.sessions[0]?.endDate;
+            return Number.isFinite(end) && block.sessions.every((item) => item.endDate === end)
+              ? end : null;
+          }
+          function timeBlockLabel(block) {
+            if (!Number.isFinite(block.startDate)) return "Time not listed";
+            const start = sessionClockFormatter.value.format(new Date(block.startDate));
+            const end = sharedBlockEnd(block);
+            return end !== null
+              ? `${start}–${sessionClockFormatter.value.format(new Date(end))}` : start;
+          }
+          let initialDayCentered = false;
+          watch([selectedBrowseDay, dayPicker], async () => {
+            if (initialDayCentered) return;
+            await nextTick();
+            const picker = dayPicker.value;
+            const selected = picker?.querySelector('[aria-pressed="true"]');
+            if (!selected) return;
+            const left = selected.getBoundingClientRect().left -
+              picker.getBoundingClientRect().left + picker.scrollLeft;
+            picker.scrollTo({ left: left - (picker.clientWidth - selected.clientWidth) / 2 });
+            initialDayCentered = true;
+            requestAnimationFrame(updateDayEdges);
+          }, { immediate: true });
+          function selectBrowseDay(key) { props.browseState.day = key; }
+          async function toggleSession(key, event) {
+            const details = event.currentTarget;
+            if (event.target !== details && !details.querySelector("summary")?.contains(event.target))
+              return;
+            event.preventDefault();
+            const wasOpen = props.browseState.expanded.has(key);
+            props.browseState.expanded.clear();
+            if (wasOpen) return;
+            props.browseState.expanded.add(key);
+            await nextTick();
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+              if (!props.browseState.expanded.has(key)) return;
+              details.scrollIntoView({
+                behavior: matchMedia("(prefers-reduced-motion: reduce), (hover: none) and (pointer: coarse)")
+                  .matches ? "auto" : "smooth",
+                block: "start",
+              });
+            }));
+          }
+          function sessionSummary(session) {
+            const start = Number.isFinite(session.startDate)
+              ? sessionClockFormatter.value.format(new Date(session.startDate)) : "";
+            const end = Number.isFinite(session.endDate)
+              ? sessionClockFormatter.value.format(new Date(session.endDate)) : "";
+            const room = roomsById.value.get(session.roomId)?.name || "";
+            const time = start && end ? `${start}–${end}` : start;
+            return [time, room].filter(Boolean).join(" · ");
+          }
+          const selectedPaper = computed(() => (props.program?.contents || []).find((item) =>
+            item.id === props.paperId));
+          const isPublication = computed(() => isPaperLike(selectedPaper.value, typesById.value));
+          const shareStatus = ref("");
+          watch(() => props.paperId, () => { shareStatus.value = ""; });
+          async function sharePaper() {
+            if (!selectedPaper.value) return;
+            shareStatus.value = "";
+            let url;
+            try {
+              // Resolve synchronously so the share call keeps the click's user activation.
+              url = window.urlFor(programHref(props.paperId));
+            } catch {
+              shareStatus.value = "Could not share this link.";
+              return;
+            }
+            try {
+              if (navigator.share) {
+                await navigator.share({ title: selectedPaper.value.title, url });
+                return;
+              }
+            } catch (error) {
+              if (error?.name === "AbortError") return;
+            }
+            try {
+              await navigator.clipboard.writeText(url);
+              shareStatus.value = "Link copied.";
+            } catch {
+              shareStatus.value = "Could not share this link.";
+            }
+          }
+          const paperLinks = ref({ acm: "", pdf: "" });
+          const paperLinkLoading = ref(false);
+          watch(selectedPaper, async (paper, _previous, onCleanup) => {
+            paperLinks.value = paper
+              ? { acm: acmHref(paper), pdf: readPaperHref(paper) }
+              : { acm: "", pdf: "" };
+            paperLinkLoading.value = false;
+            if (!paper || !isPublication.value || (paperLinks.value.acm && paperLinks.value.pdf)) return;
+            if (paperLinkCache.has(paper.id)) {
+              const resolved = paperLinkCache.get(paper.id);
+              paperLinks.value = {
+                acm: paperLinks.value.acm || resolved.acm,
+                pdf: paperLinks.value.pdf || resolved.pdf,
+              };
+              return;
+            }
+            // The current public SIGCHI program cache omits publication links. Match
+            // the viewed paper by title, allowing Crossref's trailing CSCW article code.
+            const controller = new AbortController();
+            onCleanup(() => controller.abort());
+            paperLinkLoading.value = true;
+            try {
+              const query = new URLSearchParams({
+                "query.title": paper.title, rows: "5", select: "DOI,title,link",
+              });
+              const response = await fetch(`https://api.crossref.org/works?${query}`, {
+                signal: controller.signal,
+              });
+              if (!response.ok) throw new Error("Paper lookup unavailable");
+              const result = await response.json();
+              const match = (result.message?.items || []).find((item) =>
+                /^10\.1145\//i.test(item.DOI || "") &&
+                Array.isArray(item.title) &&
+                item.title.some((candidate) => matchesPaperTitle(candidate, paper.title)));
+              const pdf = match && (
+                match.link?.find((link) =>
+                  /^https:\/\/dl\.acm\.org\/doi\/pdf\//i.test(link.URL || ""))?.URL ||
+                `https://dl.acm.org/doi/pdf/${match.DOI.split("/").map(encodeURIComponent).join("/")}`
+              ) || "";
+              if (!controller.signal.aborted) {
+                if (match) {
+                  const doi = match.DOI.split("/").map(encodeURIComponent).join("/");
+                  const resolved = { acm: `https://dl.acm.org/doi/${doi}`, pdf };
+                  paperLinkCache.set(paper.id, resolved);
+                  paperLinks.value = {
+                    acm: paperLinks.value.acm || resolved.acm,
+                    pdf: paperLinks.value.pdf || resolved.pdf,
+                  };
+                }
+              }
+            } catch {
+              // Keep any links supplied by the conference program if lookup fails.
+            } finally {
+              if (!controller.signal.aborted) paperLinkLoading.value = false;
+            }
+          }, { immediate: true });
+          const contentById = computed(() => new Map((props.program?.contents || [])
+            .map((content) => [content.id, content])));
+          const paperSessions = computed(() => presentationSlots(props.program?.sessions || [],
+            props.paperId, contentById.value, typesById.value));
+          const sessionTimeFormatter = computed(() => new Intl.DateTimeFormat(undefined, {
+            weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+            timeZone: props.program?.conference?.timeZoneName || "America/Denver",
+          }));
+          const sessionEndFormatter = computed(() => new Intl.DateTimeFormat(undefined, {
+            hour: "numeric", minute: "2-digit", timeZoneName: "short",
+            timeZone: props.program?.conference?.timeZoneName || "America/Denver",
+          }));
+          function sessionTime(session) {
+            const startTime = session.presentationStart ?? session.startDate;
+            const endTime = session.presentationEnd ?? session.endDate;
+            if (!Number.isFinite(startTime)) return "Time to be announced";
+            const start = sessionTimeFormatter.value.format(new Date(startTime));
+            const end = Number.isFinite(endTime)
+              ? sessionEndFormatter.value.format(new Date(endTime)) : "";
+            return end ? `${start}–${end}` : start;
+          }
+          const claimedBy = computed(() => props.profiles.filter((profile) =>
+            profile.value["presentation IDs"]?.includes(props.paperId)));
+          const paperAuthors = computed(() => {
+            const authors = (selectedPaper.value?.authors || []).map((author) =>
+              peopleById.value.get(author.personId)).filter(Boolean).map((person) => ({
+                name: [person.firstName, person.middleInitial, person.lastName]
+                  .filter(Boolean).join(" "),
+                shortName: [person.firstName, person.lastName].filter(Boolean).join(" "),
+              }));
+            const claimsByAuthor = new Map();
+            for (const profile of claimedBy.value) {
+              const name = comparableText(profile.value.name);
+              if (!name) continue;
+              const exact = authors.flatMap((author, index) =>
+                comparableText(author.name) === name ? [index] : []);
+              const matches = exact.length ? exact : authors.flatMap((author, index) =>
+                comparableText(author.shortName) === name ? [index] : []);
+              if (matches.length !== 1) continue;
+              const claims = claimsByAuthor.get(matches[0]) || [];
+              claims.push(profile);
+              claimsByAuthor.set(matches[0], claims);
+            }
+            return authors.map((author, index) => ({
+              ...author,
+              profile: claimsByAuthor.get(index)?.length === 1
+                ? claimsByAuthor.get(index)[0] : null,
+            }));
+          });
+          const unmatchedClaimants = computed(() => {
+            const linkedActors = new Set(paperAuthors.value.map((author) => author.profile?.actor));
+            return claimedBy.value.filter((profile) => !linkedActors.has(profile.actor));
+          });
+          const { objects: activity, isFirstPoll: activityLoading,
+            error: discoveryError } = useGraffitiDiscover(
+            () => !isPublication.value ? [] : [paperChannel(props.paperId)],
+            paperActivitySchema, undefined, () => !!isPublication.value,
+          );
+          const visibleActivity = computed(() => {
+            const objects = activity.value.filter((object) => !deletedLikeUrls.has(object.url));
+            if (localLike.value && !deletedLikeUrls.has(localLike.value.url) &&
+              !objects.some((object) => object.url === localLike.value.url))
+              objects.push(localLike.value);
+            return objects;
+          });
+          const likes = computed(() => {
+            const byActor = new Map();
+            for (const object of visibleActivity.value) {
+              if (object.value.action !== "Like paper" || object.value.paper !== props.paperId ||
+                !profileByActor.value.has(object.actor)) continue;
+              const old = byActor.get(object.actor);
+              if (!old || object.value.time > old.value.time) byActor.set(object.actor, object);
+            }
+            return [...byActor.values()].sort((a, b) => b.value.time - a.value.time);
+          });
+          const myLikes = computed(() => visibleActivity.value.filter((object) =>
+            object.actor === session.value?.actor && object.value.action === "Like paper" &&
+            object.value.paper === props.paperId));
+          const isLiked = computed(() => desiredLike.value ?? !!myLikes.value.length);
+          const comments = computed(() => {
+            const saved = activity.value.filter((object) =>
+              typeof object.value.comment === "string" && !deletedComments.has(object.url))
+              .map((object) => ({ ...object, key: object.url, status: "saved" }));
+            const savedTimes = new Set(saved.map((object) =>
+              `${object.actor}\u0000${object.value.time}\u0000${object.value.comment}`));
+            return [...saved, ...pendingComments.value.filter((object) =>
+              !savedTimes.has(`${object.actor}\u0000${object.value.time}\u0000${object.value.comment}`))]
+              .sort((a, b) => a.value.time - b.value.time || a.key.localeCompare(b.key));
+          });
+          function openLikers() {
+            if (!likersDialog.value?.open) likersDialog.value?.showModal();
+            likersOpen.value = true;
+          }
+          function closeLikersOnBackdrop(event) {
+            const dialog = event.currentTarget;
+            const bounds = dialog.getBoundingClientRect();
+            if (event.clientX < bounds.left || event.clientX > bounds.right ||
+                event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+          }
+          async function toggleLike() {
+            if (!session.value || !myProfile.value || likeBusy.value) return;
+            const next = !isLiked.value;
+            desiredLike.value = next;
+            likeBusy.value = true;
+            activityError.value = "";
+            try {
+              if (next) {
+                localLike.value = await graffiti.post({
+                  value: { action: "Like paper", paper: props.paperId, time: Date.now() },
+                  channels: [paperChannel(props.paperId), session.value.actor],
+                }, session.value);
+              } else {
+                const own = [...myLikes.value];
+                await Promise.all(own.map((like) => graffiti.delete(like, session.value)));
+                own.forEach((like) => deletedLikeUrls.add(like.url));
+                localLike.value = null;
+              }
+            } catch (error) {
+              activityError.value = error.message || "Could not update your like.";
+            } finally {
+              desiredLike.value = null;
+              likeBusy.value = false;
+            }
+          }
+          async function postComment(comment) {
+            comment.status = "sending";
+            comment.error = "";
+            try {
+              const posted = await graffiti.post({
+                value: comment.value,
+                channels: [paperChannel(props.paperId)],
+              }, session.value);
+              comment.url = posted.url;
+              comment.status = "sent";
+            } catch (error) {
+              comment.status = "failed";
+              comment.error = error.message || "Could not post comment.";
+            }
+          }
+          function sendComment() {
+            const content = draft.value.trim();
+            if (!session.value || !myProfile.value || !content || content.length > 2000) return;
+            lastCommentTime = Math.max(Date.now(), lastCommentTime + 1);
+            const comment = reactive({
+              key: `pending:${lastCommentTime}`, actor: session.value.actor,
+              value: { comment: content, time: lastCommentTime }, status: "sending", error: "",
+            });
+            pendingComments.value.push(comment);
+            draft.value = "";
+            postComment(comment);
+          }
+          async function deleteComment(comment) {
+            if (!comment.url || comment.actor !== session.value?.actor ||
+              busyComments.has(comment.url)) return;
+            busyComments.add(comment.url);
+            activityError.value = "";
+            try {
+              await graffiti.delete(comment.url, session.value);
+              deletedComments.add(comment.url);
+              pendingComments.value = pendingComments.value.filter((item) => item.url !== comment.url);
+            } catch (error) {
+              activityError.value = error.message || "Could not delete comment.";
+            } finally {
+              busyComments.delete(comment.url);
+            }
+          }
+          function backToProgram() { emit("detail-back", "?tab=program"); }
+          return {
+            session, search, visibleLimit, papers, filteredPapers, visiblePapers,
+            matchingEmptySessions, sessionNamesByContent, isPublication,
+            browseDays, selectedBrowseDay, selectedDayHasUpcoming,
+            selectedTimeBlocks, timeBlockLabel,
+            papersOnly, hidePast, dayPicker, dayMoreLeft, dayMoreRight,
+            updateDayEdges, selectBrowseDay, toggleSession, sessionSummary,
+            browseIsLiked, toggleBrowseLike, browseLikesLoading, browseLikesError,
+            browseLikeBusy, browseLikeError,
+            selectedPaper, paperAuthors, unmatchedClaimants, paperSessions, roomsById, sessionTime,
+            activityLoading, discoveryError,
+            activityError, draft, likes, isLiked, likeBusy, comments, myProfile,
+            likersDialog, likersOpen, openLikers, closeLikersOnBackdrop,
+            paperLinks, paperLinkLoading, sharePaper, shareStatus,
+            profileByActor, maxPhotoBytes, programHref, profileHref, editorHref, authorNames,
+            peopleById, typesById, contentKind, isPaperLike, abstractText, timeFormatter,
+            toggleLike, sendComment, postComment, deleteComment, backToProgram,
+            busyComments,
+          };
+        },
+      };
+
       function setup() {
+        const graffiti = useGraffiti();
+        const session = useGraffitiSession();
+        // One live profile discovery serves the directory, composer, and names in chat.
+        const { objects: profileObjects, isFirstPoll: profilesLoading,
+          error: profilesError } = useGraffitiDiscover(
+            [profilesChannel], profileSchema, undefined, true,
+          );
+        const latestProfiles = computed(() => {
+          const latest = new Map();
+          for (const profile of profileObjects.value) {
+            const previous = latest.get(profile.actor);
+            if (!previous || profile.value.time > previous.value.time ||
+              (profile.value.time === previous.value.time && profile.url > previous.url)) {
+              latest.set(profile.actor, profile);
+            }
+          }
+          return [...latest.values()];
+        });
         const program = ref(null);
         const programLoading = ref(true);
         const programError = ref("");
         const routeQuery = ref(window.query || "");
+        const chatNavigationState = new Map();
+        const routeEntries = [{ query: routeQuery.value, scrollTop: window.scrollY }];
+        let routeIndex = 0;
+        let clickedRoute = false;
+        function forwardNavigate(to) {
+          clickedRoute = true;
+          window.navigate(to);
+        }
+        function rememberLink(event) {
+          if (event.button !== 0 || event.metaKey || event.ctrlKey ||
+            event.shiftKey || event.altKey) return;
+          const link = event.target.closest?.("a[href]");
+          const href = link?.getAttribute("href");
+          clickedRoute = false;
+          if (!href || link.target === "_blank" || link.hasAttribute("download") ||
+            link.closest(".chat-title")) return;
+          let isEditorLink = href === editorHref;
+          if (!isEditorLink) {
+            try { isEditorLink = href === window.urlFor(editorHref); }
+            catch { /* A side transclusion may not have a public route. */ }
+          }
+          if (isEditorLink && session.value === null) {
+            startIntroduction(event);
+            return;
+          }
+          // Social.Wiki turns relative links into copyable absolute URLs on hover.
+          // Both forms still represent an in-app link when clicked normally.
+          clickedRoute = href.startsWith("?") || /^https?:\/\/[^#]+#(?:\/|\?)/.test(href);
+        }
+        function moveRoutePosition(nextQuery) {
+          routeEntries[routeIndex].scrollTop = window.scrollY;
+          if (!routeQuery.value && !clickedRoute && routeEntries.length === 1) {
+            // The transclusion can deliver a directly opened route after mount.
+            routeEntries[0] = { query: nextQuery, scrollTop: 0 };
+            window.scrollTo(0, 0);
+            return;
+          }
+          if (clickedRoute) {
+            routeEntries.splice(routeIndex + 1);
+            routeEntries.push({ query: nextQuery, scrollTop: 0 });
+            routeIndex = routeEntries.length - 1;
+          } else {
+            let matchingIndex = -1;
+            for (let index = routeIndex - 1; index >= 0; index--) {
+              if (routeEntries[index].query === nextQuery) { matchingIndex = index; break; }
+            }
+            if (matchingIndex < 0 && routeEntries[routeIndex + 1]?.query === nextQuery)
+              matchingIndex = routeIndex + 1;
+            if (matchingIndex >= 0) routeIndex = matchingIndex;
+            else {
+              routeEntries.splice(routeIndex + 1);
+              routeEntries.push({ query: nextQuery, scrollTop: 0 });
+              routeIndex = routeEntries.length - 1;
+            }
+          }
+          clickedRoute = false;
+          const scrollTop = routeEntries[routeIndex].scrollTop;
+          const destinationIndex = routeIndex;
+          if (scrollTop === 0) window.scrollTo(0, 0);
+          nextTick(() => requestAnimationFrame(() => {
+            if (routeIndex === destinationIndex && routeQuery.value === nextQuery)
+              window.scrollTo(0, scrollTop);
+          }));
+        }
         const routeState = computed(() => window.route.parseQuery(routeQuery.value));
+        // Keep the program query while a detail route temporarily replaces the list.
+        const paperSearch = ref(routeState.value.params?.get("search") || "");
+        const paperBrowseState = reactive({
+          day: null, expanded: new Set(), visibleLimit: 60,
+          papersOnly: false, hidePast: true,
+        });
         const routeAddress = computed(() => routeState.value.address || "");
         const editorRoute = computed(() => routeAddress.value === "people/edit");
         const profileRoute = computed(() => routeAddress.value.startsWith("people/profile/"));
@@ -885,28 +1891,98 @@
           catch { return ""; }
         });
         let savedProfile = false;
+        const introLoginError = ref("");
+        const introLoginBusy = ref(false);
+        let loginOnEditorRoute = false;
+        async function beginIntroductionLogin() {
+          try { await graffiti.login(); }
+          catch (cause) { introLoginError.value = cause.message || "Could not log in."; }
+          finally { introLoginBusy.value = false; }
+        }
+        function navigateToEarlierRoute(query) {
+          clickedRoute = false;
+          window.navigate(query || "?/");
+        }
         function syncRoute() {
           const nextQuery = window.query || "";
-          const nextEditor = window.route.parseQuery(nextQuery).address === "people/edit";
+          const nextAddress = window.route.parseQuery(nextQuery).address || "";
+          const nextEditor = nextAddress === "people/edit";
           if (editorRoute.value && !nextEditor &&
             !savedProfile && !window.confirm("Leave without saving your profile?")) {
+            clickedRoute = false;
             window.navigate(editorHref);
             return;
           }
           savedProfile = false;
+          if (nextQuery !== routeQuery.value) moveRoutePosition(nextQuery);
           routeQuery.value = nextQuery;
+          if (loginOnEditorRoute && nextEditor) {
+            loginOnEditorRoute = false;
+            void beginIntroductionLogin();
+          }
         }
         function profileSaved(actor) {
           savedProfile = true;
-          window.navigate(profileHref(actor));
+          forwardNavigate(profileHref(actor));
+        }
+        function detailBack(fallback) {
+          if (routeIndex > 0) navigateToEarlierRoute(routeEntries[routeIndex - 1].query || fallback);
+          else forwardNavigate(fallback);
+        }
+        function profileBack() {
+          const returnEntry = routeEntries.slice(0, routeIndex).reverse().find((entry) => {
+            const address = window.route.parseQuery(entry.query).address || "";
+            return address !== "people/edit" && address !== routeAddress.value;
+          });
+          if (returnEntry) navigateToEarlierRoute(returnEntry.query || "?/people");
+          else forwardNavigate("?/people");
         }
         function profileRemoved() {
-          window.navigate("?/people");
+          forwardNavigate("?/people");
         }
         window.addEventListener("querychange", syncRoute);
         onScopeDispose(() => window.removeEventListener("querychange", syncRoute));
+        const paperId = computed(() => {
+          const match = /^(?:program|papers)\/(\d+)$/.exec(routeAddress.value);
+          return match ? Number(match[1]) : null;
+        });
+        const paperRoute = computed(() => paperId.value !== null);
         const homeTab = computed(() => routeAddress.value === "people" || editorRoute.value || profileRoute.value
-          ? "people" : "chat");
+          ? "people" : ["program", "papers"].includes(routeState.value.params?.get("tab")) || paperRoute.value
+            ? "program" : "chat");
+        const welcomeDismissed = ref(false);
+        const onWelcomeRoute = computed(() => !routeAddress.value && homeTab.value === "chat");
+        // A direct link to another view should not interrupt exploration later.
+        watch([routeAddress, homeTab], ([address, tab]) => {
+          if (address || tab !== "chat") welcomeDismissed.value = true;
+        }, { immediate: true });
+        const showWelcome = computed(() => onWelcomeRoute.value && !welcomeDismissed.value &&
+          session.value !== undefined &&
+          (session.value === null ||
+            (!profilesLoading.value && !profilesError.value &&
+              !latestProfiles.value.some((profile) =>
+                profile.actor === session.value?.actor))));
+        const welcomePrompt = ref(null);
+        function dismissWelcomeOnOutsideClick(event) {
+          if (showWelcome.value && !welcomePrompt.value?.contains(event.target))
+            welcomeDismissed.value = true;
+        }
+        document.addEventListener("click", dismissWelcomeOnOutsideClick);
+        onScopeDispose(() => document.removeEventListener("click", dismissWelcomeOnOutsideClick));
+        function startIntroduction(event) {
+          if (event.button !== 0 || event.metaKey || event.ctrlKey ||
+            event.shiftKey || event.altKey) return;
+          event.preventDefault();
+          if (introLoginBusy.value) return;
+          welcomeDismissed.value = true;
+          introLoginError.value = "";
+          if (session.value === null) {
+            introLoginBusy.value = true;
+            loginOnEditorRoute = true;
+          }
+          forwardNavigate(editorHref);
+        }
+        watch(session, (current) => { if (current) introLoginError.value = ""; });
 
         async function loadProgram() {
           programLoading.value = true;
@@ -950,7 +2026,7 @@
               })),
             };
           } catch (error) {
-            programError.value = error.message || "Could not load rooms.";
+            programError.value = error.message || "Could not load program.";
           } finally {
             programLoading.value = false;
           }
@@ -1031,6 +2107,7 @@
           const data = program.value;
           if (!room || !data) return [];
           const contentById = new Map((data.contents || []).map((item) => [item.id, item]));
+          const contentTypesById = new Map((data.contentTypes || []).map((item) => [item.id, item]));
           const durationByType = new Map((data.contentTypes || []).map((item) =>
             [item.id, item.duration]));
           const markers = [];
@@ -1039,17 +2116,25 @@
             const contents = (session.contentIds || [])
               .map((id) => contentById.get(id)).filter(Boolean);
             const durations = contents.map((item) =>
-              item.durationOverride ?? durationByType.get(item.typeId));
+              item.durationOverride ?? durationByType.get(item.typeId ?? item.contentTypeId));
             // The feed has no talk start times. Infer them only when ordered
             // content durations exactly fill the session's scheduled time.
             const timedTalks = contents.length > 1 && !session.isParallelPresentation &&
               durations.every((duration) => Number.isFinite(duration) && duration > 0) &&
               durations.reduce((sum, duration) => sum + duration, 0) * 60000 ===
                 session.endDate - session.startDate;
+            const solePaper = contents.length === 1 &&
+              isPaperLike(contents[0], contentTypesById)
+              ? contents[0] : null;
+            const sessionNamedForPaper = solePaper?.title?.trim() === session.name?.trim();
             markers.push({
               kind: "marker", key: `session:${session.id}`, time: session.startDate,
               label: "Session begins", title: session.name,
-              detail: timedTalks ? `First talk: ${contents[0].title}` : "",
+              paperId: sessionNamedForPaper ? solePaper.id : null,
+              detail: timedTalks ? contents[0].title :
+                sessionNamedForPaper ? "" : solePaper?.title || "",
+              detailLabel: timedTalks ? "First talk" : "Presentation",
+              detailPaperId: timedTalks ? contents[0].id : solePaper?.id || null,
             });
             if (!timedTalks) continue;
             let talkStart = session.startDate;
@@ -1059,6 +2144,7 @@
               markers.push({
                 kind: "marker", key: `talk:${session.id}:${contents[index].id}`,
                 time: talkStart, label: "Talk begins", title: contents[index].title,
+                paperId: contents[index].id,
               });
             }
           }
@@ -1068,11 +2154,40 @@
           ? hallwayChannel : selectedRoom.value
             ? `cscw-meta:2026:room:${selectedRoom.value.id}:v1` : null);
 
+        // The transclusion forwards document.title to the browser tab.
+        const pageTitle = computed(() => {
+          let name;
+          if (editorRoute.value) {
+            name = latestProfiles.value.some((profile) => profile.actor === session.value?.actor)
+              ? "Edit profile" : "Introduce yourself";
+          } else if (profileRoute.value) {
+            name = latestProfiles.value.find((profile) =>
+              profile.actor === profileActor.value)?.value.name || "Profile";
+          } else if (paperRoute.value) {
+            name = program.value?.contents?.find((item) => item.id === paperId.value)?.title || "Program";
+          } else if (routeAddress.value === "hallway") {
+            name = "The Hallway Track";
+          } else if (routeRoomId.value !== null) {
+            name = selectedTitle.value || "Room chat";
+          } else {
+            name = homeTab.value === "people" ? "People" :
+              homeTab.value === "program" ? "Program" : "Chat";
+          }
+          return `${name} · CSCW Meta`;
+        });
+        watch(pageTitle, (value) => { document.title = value; }, { immediate: true });
+
         onMounted(() => { syncRoute(); loadProgram(); });
         return {
           program, programLoading, programError, loadProgram,
+          profileObjects, latestProfiles, profilesLoading, profilesError,
           routeAddress, editorRoute, profileRoute, profileActor, homeTab,
-          profileSaved, profileRemoved,
+          session, welcomeDismissed, welcomePrompt, showWelcome, editorHref,
+          introLoginError, introLoginBusy, startIntroduction,
+          paperId, paperRoute, paperSearch, paperBrowseState, actualNow,
+          profileSaved, profileRemoved, profileBack, detailBack, rememberLink,
+          forwardNavigate,
+          chatNavigationState,
           routeRoomId, activeRooms, inactiveRooms,
           selectedTitle, selectedHref, selectedContext, selectedSuggestions,
           selectedMarkers, selectedChannel,
@@ -1082,7 +2197,7 @@
 
       createApp({
         template: "#app-template",
-        components: { ChatRoom, PeopleDirectory },
+        components: { ChatRoom, PeopleDirectory, ProgramView },
         setup,
       })
         .use(GraffitiPlugin, { graffiti: new window.Graffiti() })
@@ -1093,11 +2208,12 @@
     <div id="app"><p>Loading…</p></div>
 
     <template id="app-template">
-      <main>
+      <main @click.capture="rememberLink">
         <template v-if="!routeAddress || routeAddress === 'people' || editorRoute || profileRoute">
           <nav v-if="!editorRoute && !profileRoute" class="home-tabs" aria-label="Home sections">
             <a href="?/" :aria-current="homeTab === 'chat' ? 'page' : null">Chat</a>
             <a href="?/people" :aria-current="homeTab === 'people' ? 'page' : null">People</a>
+            <a href="?tab=program" :aria-current="homeTab === 'program' ? 'page' : null">Program</a>
           </nav>
         <nav v-if="homeTab === 'chat'" class="room-browser" aria-label="Chat rooms">
           <h1>Happening now</h1>
@@ -1140,20 +2256,38 @@
             </details>
           </template>
         </nav>
-        <people-directory v-else :program="program" :program-loading="programLoading"
+        <people-directory v-else-if="homeTab === 'people'" :program="program" :program-loading="programLoading"
           :program-error="programError" :editor-route="editorRoute"
+          :profile-objects="profileObjects" :latest-profiles="latestProfiles"
+          :profiles-loading="profilesLoading" :profiles-error="profilesError"
+          :login-error="introLoginError" :login-busy="introLoginBusy"
           :profile-route="profileRoute" :profile-actor="profileActor"
-          @saved="profileSaved" @removed="profileRemoved"></people-directory>
+          @saved="profileSaved" @removed="profileRemoved"
+          @open-editor="forwardNavigate"
+          @profile-back="profileBack" @detail-back="detailBack"></people-directory>
+        <program-view v-else v-model:search="paperSearch" :program="program" :program-loading="programLoading"
+          :program-error="programError" :profiles="latestProfiles"
+          :profiles-loading="profilesLoading" :profiles-error="profilesError"
+          :paper-id="null" :browse-state="paperBrowseState" :now="actualNow"></program-view>
         </template>
         <template v-else>
+          <program-view v-if="paperRoute" :key="paperId" :search="paperSearch" :program="program"
+            :program-loading="programLoading" :program-error="programError"
+            :profiles="latestProfiles" :profiles-loading="profilesLoading"
+            :profiles-error="profilesError" :paper-id="paperId"
+            :browse-state="paperBrowseState" :now="actualNow"
+            @detail-back="detailBack"></program-view>
           <!-- Key by channel so local chat state cannot leak between rooms. -->
-          <chat-room v-if="selectedChannel" :key="selectedChannel"
+          <chat-room v-else-if="selectedChannel" :key="selectedChannel"
             :channel="selectedChannel" :title="selectedTitle"
+            :profiles="latestProfiles" :profiles-loading="profilesLoading"
+            :profiles-error="profilesError"
             :href="selectedHref" back-href="?/"
             :context="selectedContext" :markers="selectedMarkers"
             :suggestions="selectedSuggestions"
             :marker-time-zone="conferenceTimeZone"
-            :autopoll="true"></chat-room>
+            :navigation-state="chatNavigationState" :autopoll="true"
+            @detail-back="detailBack"></chat-room>
           <template v-else>
             <p><a href="?/">← Back to rooms</a></p>
             <p v-if="routeRoomId !== null && programLoading" role="status">Loading room…</p>
@@ -1163,6 +2297,17 @@
             <p v-else role="status">Room not found.</p>
           </template>
         </template>
+        <div v-if="showWelcome" class="welcome-backdrop" aria-hidden="true"></div>
+        <aside v-if="showWelcome" ref="welcomePrompt" class="welcome-prompt" aria-labelledby="welcome-title">
+          <h2 id="welcome-title">Welcome to CSCW Meta!</h2>
+          <p>Would you like to introduce yourself so that others can learn about your research and connect with you?</p>
+          <div class="welcome-actions">
+            <a class="introduce-button" :href="editorHref">
+              {{ session === null ? 'Log in to introduce yourself' : 'Introduce yourself' }}
+            </a>
+            <button type="button" @click="welcomeDismissed = true">Not now</button>
+          </div>
+        </aside>
       </main>
     </template>
 
@@ -1170,29 +2315,31 @@
       <section class="people-directory"
         :aria-label="editorRoute ? 'Profile editor' : profileRoute ? 'Profile' : 'People directory'">
         <header v-if="editorRoute" class="profile-page-header">
-          <a class="chat-back" :href="myProfile ? profileHref(myProfile.actor) : '?/people'"
-            :aria-label="myProfile ? 'Back to profile' : 'Back to people'" title="Back">←</a>
+          <nav class="detail-nav" aria-label="Page navigation">
+            <button class="chat-back" type="button" aria-label="Back" @click="goBackFromEditor"><span aria-hidden="true">←</span><span class="nav-label">Back</span></button>
+            <a class="detail-home" href="?/" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg><span class="nav-label">Home</span></a>
+          </nav>
           <h1>{{ myProfile ? 'Edit your profile' : 'Introduce yourself' }}</h1>
         </header>
         <header v-else-if="profileRoute" class="profile-page-header">
-          <a class="chat-back" href="?/people" aria-label="Back to people"
-            title="Back to people">←</a>
-          <h1>Profile</h1>
-        </header>
-        <header v-else>
-          <h1>People</h1>
+          <nav class="detail-nav" aria-label="Page navigation">
+            <button class="chat-back" type="button" aria-label="Back" @click="goBackFromProfile"><span aria-hidden="true">←</span><span class="nav-label">Back</span></button>
+            <a class="detail-home" href="?/" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg><span class="nav-label">Home</span></a>
+          </nav>
         </header>
         <p v-if="notice" role="status">{{ notice }}</p>
-        <p v-if="error" role="alert">{{ error }}</p>
+        <p v-if="error || (editorRoute && loginError)" role="alert">{{ error || loginError }}</p>
         <button v-if="editorRoute && session === null" class="introduce-button"
-          type="button" @click="logIn">Log in to introduce yourself</button>
+          type="button" :disabled="loginBusy" @click="logIn">
+          {{ loginBusy ? 'Logging in…' : 'Log in to introduce yourself' }}
+        </button>
         <p v-else-if="editorRoute && isFirstPoll && !discoveryError" role="status">
           Loading profile…
         </p>
 
         <form v-if="editorRoute && editing" class="profile-form" @submit.prevent="saveProfile">
-          <label>Name
-            <input v-model="name" type="text" autocomplete="name" maxlength="100" required>
+          <label>Name <small>(what you publish under)</small>
+            <input ref="nameInput" v-model="name" type="text" autocomplete="name" maxlength="100" required>
           </label>
           <label class="profile-photo-picker">
             <span class="profile-avatar profile-photo-preview">
@@ -1219,9 +2366,9 @@
             <textarea v-model="interests" rows="3" maxlength="300" required></textarea>
           </label>
           <fieldset>
-            <legend>Are you presenting anything?</legend>
+            <legend>Are you involved in anything on the program?</legend>
             <input v-model="presentationSearch" type="search" autocomplete="off"
-              aria-label="Search presentations" placeholder="Search titles or authors"
+              aria-label="Search program items" placeholder="Search titles or authors"
               :disabled="!program">
             <p v-if="programLoading" role="status">Loading program…</p>
             <p v-else-if="programError" role="status">Program search is unavailable right now.</p>
@@ -1281,9 +2428,9 @@
                 <span v-else aria-hidden="true">{{ selectedProfile.value.name.slice(0, 1) }}</span>
               </div>
               <div>
-                <h2>{{ selectedProfile.value.name }}
+                <h1>{{ selectedProfile.value.name }}
                   <small v-if="selectedProfile.value.pronouns">({{ selectedProfile.value.pronouns }})</small>
-                </h2>
+                </h1>
                 <graffiti-actor-to-handle :actor="selectedProfile.actor" v-slot="{ handle }">
                   <small v-if="handle" class="profile-handle">@{{ handle.replace(/^@/, '') }}</small>
                 </graffiti-actor-to-handle>
@@ -1291,27 +2438,46 @@
             </header>
             <div v-if="selectedProfile.value['presentation IDs']?.length || selectedProfile.value['open to meeting']"
               class="profile-badges">
-              <span v-if="selectedProfile.value['open to meeting']" class="meeting">🤝 Open to meeting</span>
-              <span v-if="selectedProfile.value['presentation IDs']?.length" class="presenter">🎤 Presenter</span>
+              <span v-if="selectedProfile.value['open to meeting']" class="meeting">🤝 Let's meet!</span>
+              <span v-if="selectedProfile.value['presentation IDs']?.length" class="program">🗓️ On the program</span>
             </div>
             <section>
-              <h3>Research interests</h3>
+              <h2>Research interests</h2>
               <p><template v-for="(part, index) in researchParts(selectedProfile.value['research interests'])"
                 :key="index"><a v-if="isResearchLink(part)" :href="part">{{ part }}</a><template
                 v-else>{{ part }}</template></template></p>
             </section>
             <section v-if="selectedProfile.value['presentation IDs']?.length">
-              <h3>Presenting</h3>
+              <h2>On the program</h2>
               <ul>
                 <li v-for="id in selectedProfile.value['presentation IDs']" :key="id">
-                  {{ presentationTitle(id) }}<small v-if="presentationAuthors(id)">
+                  <a :href="programHref(id)">{{ presentationTitle(id) }}</a><small v-if="presentationAuthors(id)">
                     — {{ presentationAuthors(id) }}</small>
                 </li>
               </ul>
             </section>
             <section v-if="selectedProfile.value['open to meeting']">
-              <h3>How to reach me</h3>
-              <p>{{ selectedProfile.value['how to reach me'] }}</p>
+              <h2>How to reach me</h2>
+              <p><template v-for="(part, index) in contactParts(selectedProfile.value['how to reach me'])"
+                :key="index"><a v-if="part.href" :href="part.href">{{ part.text }}</a><template
+                v-else>{{ part.text }}</template></template></p>
+            </section>
+            <section v-if="likedPapers.length || likesLoading || likesError">
+              <h2>Liked papers</h2>
+              <p v-if="likesError" role="status">Could not load liked papers. Retrying…</p>
+              <p v-else-if="likesLoading" role="status">Loading liked papers…</p>
+              <ul v-else-if="likedPapers.length">
+                <li v-for="item in likedPapers" :key="item.paper.id">
+                  <a :href="programHref(item.paper.id)">{{ item.paper.title }}</a>
+                  <small v-if="!item.slots.length" class="liked-paper-time">Not scheduled</small>
+                  <small v-for="slot in item.slots" :key="slot.id" class="liked-paper-time">
+                    <time v-if="Number.isFinite(slot.presentationStart ?? slot.startDate)"
+                      :datetime="new Date(slot.presentationStart ?? slot.startDate).toISOString()">{{ scheduleLabel(slot) }}</time>
+                    <span v-else>{{ scheduleLabel(slot) }}</span><template v-if="slot.name"> · {{ slot.name }}</template><template
+                      v-if="scheduleRoom(slot)"> · {{ scheduleRoom(slot) }}</template>
+                  </small>
+                </li>
+              </ul>
             </section>
             <div v-if="selectedProfile.actor === session?.actor" class="profile-actions">
               <button class="profile-edit" type="button" :disabled="busy"
@@ -1330,16 +2496,15 @@
             <circle cx="11" cy="11" r="7"></circle><path d="m16 16 5 5"></path>
           </svg>
           <input v-model="search" type="search" autocomplete="off"
-            aria-label="Search people" placeholder="Name, interest, or presentation">
+            aria-label="Search people" placeholder="Name, interest, or program item">
         </div>
         <fieldset v-if="profiles.length" class="people-filters" aria-label="Filter people">
-          <label class="meeting"><input v-model="meetingOnly" type="checkbox"> 🤝 Open to meeting</label>
-          <label class="presenter"><input v-model="presentersOnly" type="checkbox"> 🎤 Presenters</label>
+          <label class="meeting"><input v-model="meetingOnly" type="checkbox"> 🤝 Let's meet!</label>
+          <label class="program"><input v-model="onProgramOnly" type="checkbox"> 🗓️ On the program</label>
         </fieldset>
-        <a v-if="!isFirstPoll && session && !myProfile"
-          class="introduce-button" :href="editorHref">Introduce yourself</a>
-        <button v-else-if="session === null" class="introduce-button"
-          type="button" @click="logIn">Log in to introduce yourself</button>
+        <a v-if="session === null || (session && !isFirstPoll && !discoveryError && !myProfile)"
+          class="introduce-button" :href="editorHref">{{ session === null
+            ? 'Log in to introduce yourself' : 'Introduce yourself' }}</a>
         <p v-if="discoveryError" role="status">
           Could not load profiles: {{ discoveryError.message }}. Retrying…
         </p>
@@ -1372,8 +2537,8 @@
                 </header>
                 <div v-if="profile.value['presentation IDs']?.length || profile.value['open to meeting']"
                   class="profile-badges">
-                  <span v-if="profile.value['open to meeting']" class="meeting">🤝 Open to meeting</span>
-                  <span v-if="profile.value['presentation IDs']?.length" class="presenter">🎤 Presenter</span>
+                  <span v-if="profile.value['open to meeting']" class="meeting">🤝 Let's meet!</span>
+                  <span v-if="profile.value['presentation IDs']?.length" class="program">🗓️ On the program</span>
                 </div>
                 <p>{{ profile.value['research interests'] }}</p>
               </a>
@@ -1384,12 +2549,276 @@
       </section>
     </template>
 
+    <template id="program-template">
+      <section class="papers" :aria-label="paperId === null ? 'Program' : 'Program item'">
+        <template v-if="paperId === null">
+          <div class="program-search" role="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle><path d="m16 16 5 5"></path>
+            </svg>
+            <input v-model="search" type="search" autocomplete="off"
+              aria-label="Search the program" placeholder="Search title, abstract, or author">
+          </div>
+          <p v-if="programLoading" role="status">Loading program…</p>
+          <p v-else-if="programError" role="status">{{ programError }}</p>
+          <template v-else>
+            <p v-if="browseLikeError" role="status">{{ browseLikeError }}</p>
+            <p v-if="browseLikesError && myProfile" role="status">Could not load your likes. Retrying…</p>
+            <p v-if="search.trim() && !filteredPapers.length && !matchingEmptySessions.length" role="status">
+              No matching program items.
+            </p>
+            <template v-else-if="search.trim()">
+              <div v-if="matchingEmptySessions.length" class="paper-browse">
+                <article v-for="item in matchingEmptySessions" :key="item.id" class="program-session">
+                  <strong>{{ item.name }}</strong>
+                  <small v-if="sessionSummary(item)">{{ sessionSummary(item) }}</small>
+                  <a v-if="roomsById.has(item.roomId)" class="paper-room-chat"
+                    :href="`?/room/${item.roomId}`">Open room chat →</a>
+                </article>
+              </div>
+              <ul class="paper-list">
+                <li v-for="paper in visiblePapers" :key="paper.id">
+                  <a :href="programHref(paper.id)">
+                    <strong>{{ paper.title }}</strong>
+                    <small>{{ contentKind(paper, typesById) }}<template
+                      v-if="authorNames(paper, peopleById)"> · {{ authorNames(paper, peopleById) }}</template></small>
+                    <small v-if="sessionNamesByContent.get(paper.id)?.length">
+                      {{ sessionNamesByContent.get(paper.id).join(' · ') }}</small>
+                  </a>
+                  <button v-if="myProfile && isPaperLike(paper, typesById)" class="paper-inline-like" type="button"
+                    :aria-label="`${browseIsLiked(paper.id) ? 'Unlike' : 'Like'} ${paper.title}`"
+                    :title="browseIsLiked(paper.id) ? 'Unlike paper' : 'Like paper'"
+                    :aria-pressed="browseIsLiked(paper.id)"
+                    :disabled="browseLikesLoading || browseLikesError || browseLikeBusy.has(paper.id)"
+                    @click="toggleBrowseLike(paper.id)">{{ browseIsLiked(paper.id) ? '♥' : '♡' }}<span
+                      class="paper-like-label">{{ browseIsLiked(paper.id) ? 'Liked' : 'Like' }}</span></button>
+                </li>
+              </ul>
+              <button v-if="filteredPapers.length > visibleLimit" type="button"
+                @click="visibleLimit += 60">Show more</button>
+            </template>
+            <p v-else-if="!browseDays.length" role="status">No program available.</p>
+            <div v-else class="paper-browse">
+              <nav ref="dayPicker" class="paper-day-picker" aria-label="Browse program by day"
+                :class="{ 'more-left': dayMoreLeft, 'more-right': dayMoreRight }"
+                @scroll="updateDayEdges">
+                <button v-for="day in browseDays" :key="day.key" type="button"
+                  :aria-label="day.fullLabel || day.label" :title="day.fullLabel || day.label"
+                  :aria-pressed="selectedBrowseDay?.key === day.key"
+                  @click="selectBrowseDay(day.key)">{{ day.label }}</button>
+              </nav>
+              <fieldset class="program-filters" aria-label="Filter program">
+                <label><input v-model="papersOnly" type="checkbox"> Papers only</label>
+                <label><input v-model="hidePast" type="checkbox"> Hide past events</label>
+              </fieldset>
+              <p v-if="!selectedTimeBlocks.length" role="status">
+                <template v-if="hidePast && !selectedDayHasUpcoming">
+                  All events on this day have ended.
+                </template>
+                <template v-else-if="papersOnly">
+                  No papers on this day. Uncheck “Papers only” to see other events.
+                </template>
+                <template v-else>No events on this day.</template>
+              </p>
+              <button v-if="!selectedTimeBlocks.length && hidePast && !selectedDayHasUpcoming"
+                type="button" @click="hidePast = false">Show past events</button>
+              <section v-for="block in selectedTimeBlocks" :key="block.key" class="program-time-block">
+                <h2><time v-if="Number.isFinite(block.startDate)"
+                    :datetime="new Date(block.startDate).toISOString()">{{ timeBlockLabel(block) }}</time>
+                  <span v-else>{{ timeBlockLabel(block) }}</span>
+                </h2>
+                <template v-for="session in block.sessions" :key="session.key">
+                  <article v-if="!session.papers.length" class="program-session">
+                    <strong>{{ session.name || 'Session' }}</strong>
+                    <small v-if="roomsById.get(session.roomId)?.name">{{ roomsById.get(session.roomId).name }}</small>
+                    <a v-if="roomsById.has(session.roomId)" class="paper-room-chat"
+                      :href="`?/room/${session.roomId}`">Open room chat →</a>
+                  </article>
+                  <details v-else :open="browseState.expanded.has(session.key)" @click="toggleSession(session.key, $event)">
+                    <summary><strong>{{ session.name || 'Session' }}</strong>
+                      <small v-if="roomsById.get(session.roomId)?.name">{{ roomsById.get(session.roomId).name }}</small>
+                    </summary>
+                    <a v-if="browseState.expanded.has(session.key) && roomsById.has(session.roomId)"
+                      class="paper-room-chat" :href="`?/room/${session.roomId}`">Open room chat →</a>
+                    <ul v-if="browseState.expanded.has(session.key)" class="paper-list">
+                      <li v-for="paper in session.papers" :key="paper.id">
+                        <a :href="programHref(paper.id)">
+                          <strong>{{ paper.title }}</strong>
+                          <small>{{ contentKind(paper, typesById) }}<template
+                            v-if="authorNames(paper, peopleById)"> · {{ authorNames(paper, peopleById) }}</template></small>
+                        </a>
+                        <button v-if="myProfile && isPaperLike(paper, typesById)" class="paper-inline-like" type="button"
+                          :aria-label="`${browseIsLiked(paper.id) ? 'Unlike' : 'Like'} ${paper.title}`"
+                          :title="browseIsLiked(paper.id) ? 'Unlike paper' : 'Like paper'"
+                          :aria-pressed="browseIsLiked(paper.id)"
+                          :disabled="browseLikesLoading || browseLikesError || browseLikeBusy.has(paper.id)"
+                          @click="toggleBrowseLike(paper.id)">{{ browseIsLiked(paper.id) ? '♥' : '♡' }}<span
+                            class="paper-like-label">{{ browseIsLiked(paper.id) ? 'Liked' : 'Like' }}</span></button>
+                      </li>
+                    </ul>
+                  </details>
+                </template>
+              </section>
+            </div>
+          </template>
+        </template>
+        <template v-else>
+          <header>
+            <nav class="detail-nav" aria-label="Page navigation">
+              <button class="chat-back" type="button" aria-label="Back" @click="backToProgram"><span aria-hidden="true">←</span><span class="nav-label">Back</span></button>
+              <a class="detail-home" href="?/" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg><span class="nav-label">Home</span></a>
+            </nav>
+            <nav v-if="selectedPaper && isPublication" class="paper-links" aria-label="Publication links">
+              <a v-if="paperLinks.acm" class="paper-read paper-acm"
+                :href="paperLinks.acm" target="_blank" rel="noopener"
+                aria-label="See on ACM"><span class="paper-link-full">See on ACM</span><span
+                  class="paper-link-short">ACM</span> ↗</a>
+              <a v-if="paperLinks.pdf" class="paper-read"
+                :href="paperLinks.pdf" target="_blank" rel="noopener"
+                aria-label="Download PDF"><span class="paper-link-full">Download PDF</span><span
+                  class="paper-link-short">PDF</span> ↓</a>
+              <small v-if="paperLinkLoading && !paperLinks.acm && !paperLinks.pdf"
+                class="paper-read-status">Finding paper…</small>
+            </nav>
+          </header>
+          <p v-if="programLoading" role="status">Loading program item…</p>
+          <p v-else-if="programError" role="status">{{ programError }}</p>
+          <p v-else-if="!selectedPaper" role="status">Program item not found.</p>
+          <article v-else class="paper-detail">
+            <h1>{{ selectedPaper.title }}</h1>
+            <p v-if="paperAuthors.length" class="paper-authors">
+              <template v-for="(author, index) in paperAuthors" :key="index">
+                <template v-if="index">, </template><a v-if="author.profile"
+                  :href="profileHref(author.profile.actor)">{{ author.name }}</a><template
+                  v-else>{{ author.name }}</template>
+              </template>
+            </p>
+            <section v-if="unmatchedClaimants.length && !profilesLoading && !profilesError"
+              class="paper-claims">
+              <h2>Claimed by</h2>
+              <ul class="claimants">
+                <li v-for="profile in unmatchedClaimants" :key="profile.actor">
+                  <a :href="profileHref(profile.actor)">{{ profile.value.name }}</a>
+                </li>
+              </ul>
+            </section>
+            <aside class="paper-context" aria-label="Conference details">
+              <p v-if="contentKind(selectedPaper, typesById)">
+                {{ contentKind(selectedPaper, typesById) }}</p>
+              <p v-for="item in paperSessions" :key="item.id">
+                <strong>{{ item.name }}</strong> ·
+                <span>{{ item.presentationStart === null ? 'During session' : 'Presentation' }}:</span>
+                <time v-if="Number.isFinite(item.startDate)"
+                  :datetime="new Date(item.presentationStart ?? item.startDate).toISOString()">
+                  {{ sessionTime(item) }}</time>
+                <span v-else>{{ sessionTime(item) }}</span>
+                <template v-if="roomsById.has(item.roomId)">
+                  · {{ roomsById.get(item.roomId).name }}
+                  <a class="paper-room-chat" :href="`?/room/${item.roomId}`">Open room chat →</a>
+                </template>
+              </p>
+            </aside>
+            <div v-if="isPublication" class="paper-reactions">
+              <button v-if="myProfile" type="button" :disabled="likeBusy"
+                :aria-pressed="isLiked" @click="toggleLike">
+                {{ isLiked ? '♥ Liked' : '♡ Like' }}
+              </button>
+              <button class="paper-share" type="button" @click="sharePaper"><svg viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" aria-hidden="true"><path d="M12 16V3m0 0L8 7m4-4 4 4M4 13v7h16v-7"/></svg>Share</button>
+              <button v-if="likes.length" type="button" class="paper-likers-trigger"
+                aria-haspopup="dialog" @click="openLikers">
+                  <span class="liker-preview" aria-hidden="true">
+                    <span v-for="like in likes.slice(0, 3)" :key="like.actor">
+                      <graffiti-get-media v-if="profileByActor.get(like.actor).value['profile picture']"
+                        :url="profileByActor.get(like.actor).value['profile picture']"
+                        :accept="{ types: ['image/*'], maxBytes: maxPhotoBytes }" v-slot="{ media }">
+                        <img v-if="media" :src="media.dataUrl" alt="">
+                        <span v-else aria-hidden="true">{{ profileByActor.get(like.actor).value.name.slice(0, 1) }}</span>
+                      </graffiti-get-media>
+                      <span v-else aria-hidden="true">{{ profileByActor.get(like.actor).value.name.slice(0, 1) }}</span>
+                    </span>
+                  </span>
+                  <span>See who liked this</span>
+              </button>
+              <small v-if="shareStatus" role="status">{{ shareStatus }}</small>
+            </div>
+            <dialog v-if="isPublication && likes.length" ref="likersDialog" class="paper-likers-dialog"
+              aria-labelledby="paper-likers-title" @click="closeLikersOnBackdrop"
+              @close="likersOpen = false">
+              <header>
+                <h2 id="paper-likers-title">People who liked this</h2>
+                <button type="button" aria-label="Close" @click="likersDialog.close()">×</button>
+              </header>
+              <ul v-if="likersOpen">
+                <li v-for="like in likes" :key="like.actor">
+                  <a :href="profileHref(like.actor)">
+                    <span class="profile-avatar" aria-hidden="true">
+                      <graffiti-get-media v-if="profileByActor.get(like.actor).value['profile picture']"
+                        :url="profileByActor.get(like.actor).value['profile picture']"
+                        :accept="{ types: ['image/*'], maxBytes: maxPhotoBytes }" v-slot="{ media }">
+                        <img v-if="media" :src="media.dataUrl" alt="">
+                        <span v-else>{{ profileByActor.get(like.actor).value.name.slice(0, 1) }}</span>
+                      </graffiti-get-media>
+                      <span v-else>{{ profileByActor.get(like.actor).value.name.slice(0, 1) }}</span>
+                    </span>
+                    {{ profileByActor.get(like.actor).value.name }}
+                  </a>
+                </li>
+              </ul>
+            </dialog>
+            <section>
+              <h2>{{ isPublication ? 'Abstract' : 'About' }}</h2>
+              <div class="abstract"><p>{{ abstractText(selectedPaper) || 'No description available.' }}</p></div>
+            </section>
+            <section v-if="isPublication">
+              <h2>Comments</h2>
+              <p v-if="discoveryError" role="status">Could not load comments. Retrying…</p>
+              <p v-else-if="activityLoading" role="status">Loading comments…</p>
+              <p v-else-if="!comments.length">No comments yet.</p>
+              <ol v-if="comments.length" class="comments">
+                <li v-for="comment in comments" :key="comment.key">
+                  <a v-if="profileByActor.has(comment.actor)" :href="profileHref(comment.actor)">
+                    {{ profileByActor.get(comment.actor).value.name }}</a>
+                  <graffiti-actor-to-handle v-else :actor="comment.actor"></graffiti-actor-to-handle>
+                  <small> · {{ timeFormatter.format(new Date(comment.value.time)) }}</small>
+                  <p>{{ comment.value.comment }}</p>
+                  <small v-if="comment.status === 'sending'">Sending…</small>
+                  <button v-if="comment.status === 'failed'" type="button"
+                    @click="postComment(comment)">Retry</button>
+                  <small v-if="comment.error" role="alert">{{ comment.error }}</small>
+                  <button v-if="comment.actor === session?.actor && comment.url"
+                    type="button" :disabled="busyComments.has(comment.url)"
+                    @click="deleteComment(comment)">Delete</button>
+                </li>
+              </ol>
+              <form v-if="myProfile" @submit.prevent="sendComment">
+                <label for="paper-comment">Add a comment</label>
+                <textarea id="paper-comment" v-model="draft" rows="3" maxlength="2000"
+                  autocomplete="off"></textarea>
+                <button type="submit" :disabled="!draft.trim()">Post comment</button>
+              </form>
+              <p v-else-if="session === null">Log in to comment or like.</p>
+              <p v-else-if="profilesError" role="status">Could not load profiles. Retrying…</p>
+              <p v-else-if="profilesLoading">Loading profiles…</p>
+              <p v-else-if="session && !myProfile">
+                <a :href="editorHref">Introduce yourself to comment or like.</a></p>
+            </section>
+            <p v-if="activityError" role="alert">{{ activityError }}</p>
+          </article>
+        </template>
+      </section>
+    </template>
+
     <template id="chat-room-template">
       <section class="chat" :aria-label="title">
         <header>
           <div class="chat-heading">
-            <a v-if="backHref" class="chat-back" :href="backHref"
-              aria-label="Back to rooms" title="Back to rooms">←</a>
+            <nav v-if="backHref" class="detail-nav" aria-label="Page navigation">
+              <button class="chat-back" type="button" aria-label="Back" @click="goBack"><span aria-hidden="true">←</span><span class="nav-label">Back</span></button>
+              <a class="detail-home" href="?/" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg><span class="nav-label">Home</span></a>
+            </nav>
             <div class="chat-heading-content">
               <h1 ref="sessionTitle" class="chat-title"
                 :class="{ 'more-left': sessionMoreLeft, 'more-right': sessionMoreRight }"
@@ -1405,13 +2834,16 @@
         <section ref="messageList" class="chat-log"
           :class="{ 'menu-open': actionMenu, 'press-menu-open': actionMenu?.mode === 'press' }"
           :aria-label="`${title} messages`"
+          @scroll="rememberChatState"
           role="log" aria-live="polite" aria-relevant="additions">
           <p v-if="discoveryError" role="status">
             Could not load messages: {{ discoveryError.message }}. Retrying…
           </p>
           <p v-if="isFirstPoll && !discoveryError" role="status">Loading messages…</p>
-          <p v-if="!isFirstPoll && !timelineItems.length && !discoveryError">
-            No messages yet. Start the conversation.
+          <p v-if="profilesError" role="status">Could not load profiles. Retrying…</p>
+          <p v-if="!isFirstPoll && !profilesLoading && !timelineItems.length &&
+            !discoveryError && !profilesError">
+            No messages yet.<template v-if="myProfile"> Start the conversation.</template>
           </p>
           <ol v-if="timelineItems.length" class="messages">
             <template v-for="message in timelineItems" :key="message.key">
@@ -1419,8 +2851,12 @@
                 <aside>
                   <small><time :datetime="dateTime(message.time)">{{ formatMarkerTime(message.time) }}</time>
                     · {{ message.label }}</small>
-                  <strong>{{ message.title }}</strong>
-                  <small v-if="message.detail">{{ message.detail }}</small>
+                  <strong><a v-if="message.paperId" :href="programHref(message.paperId)">{{ message.title }}</a>
+                    <template v-else>{{ message.title }}</template></strong>
+                  <small v-if="message.detail">{{ message.detailLabel }}:
+                    <a v-if="message.detailPaperId" :href="programHref(message.detailPaperId)">{{ message.detail }}</a>
+                    <template v-else>{{ message.detail }}</template>
+                  </small>
                 </aside>
               </li>
               <li v-else
@@ -1428,6 +2864,17 @@
                   selected: actionMenu?.mode === 'press' && actionMenu.message.key === message.key }"
                 :style="actionMenu?.mode === 'press' && actionMenu.message.key === message.key
                   ? { transform: `translateY(-${actionMenu.lift}px)` } : null">
+                <a class="message-avatar" :href="profileHref(message.actor)"
+                  :aria-label="`${profileByActor.get(message.actor)?.value.name}'s profile`">
+                  <graffiti-get-media v-if="profileByActor.get(message.actor)?.value['profile picture']"
+                    :url="profileByActor.get(message.actor).value['profile picture']"
+                    :accept="{ types: ['image/*'], maxBytes: maxPhotoBytes }"
+                    v-slot="{ media }">
+                    <img v-if="media" :src="media.dataUrl" alt="">
+                    <span v-else aria-hidden="true">{{ profileByActor.get(message.actor)?.value.name.slice(0, 1) }}</span>
+                  </graffiti-get-media>
+                  <span v-else aria-hidden="true">{{ profileByActor.get(message.actor)?.value.name.slice(0, 1) }}</span>
+                </a>
                 <button v-if="message.actor === session?.actor" class="message-actions-trigger"
                   type="button" aria-label="Message actions" title="Message actions"
                   :aria-expanded="actionMenu?.message.key === message.key"
@@ -1437,12 +2884,10 @@
                   @pointercancel="clearLongPress" @pointerleave="clearLongPress"
                   @selectstart="onMessageSelectStart(message, $event)"
                   @contextmenu="onMessageContextMenu(message, $event)">
-                  <header v-if="message.actor !== session?.actor">
-                    <strong>
-                      <graffiti-actor-to-handle :actor="message.actor" v-slot="{ handle }">
-                        {{ handle || 'Account' }}
-                      </graffiti-actor-to-handle>
-                    </strong>
+                  <header>
+                    <strong><a :href="profileHref(message.actor)">
+                      {{ profileByActor.get(message.actor)?.value.name }}
+                    </a></strong>
                   </header>
                   <p><template v-for="(part, index) in textParts(message.content)" :key="index"><a
                     v-if="isLink(part)" :href="part">{{ part }}</a><template
@@ -1478,7 +2923,8 @@
             @click="deleteFromMenu">Delete</button>
         </div>
 
-        <div v-if="session && !draft.trim() && suggestions.length" class="chat-suggestions"
+        <div v-if="session && myProfile && !profilesError && !profilesLoading &&
+          !draft.trim() && suggestions.length" class="chat-suggestions"
           ref="suggestionList" role="group" aria-label="Suggestions"
           :class="{ 'more-left': suggestionsMoreLeft, 'more-right': suggestionsMoreRight }"
           @scroll="updateSuggestionEdges">
@@ -1486,11 +2932,13 @@
           <button v-for="suggestion in suggestions" :key="suggestion.label" type="button"
             @click="useSuggestion(suggestion)">{{ suggestion.label }}</button>
         </div>
-        <form autocomplete="off" :class="{ 'login-form': session === null }"
+        <form autocomplete="off" :class="{ 'composer-gate': !myProfile }"
           @submit.prevent="sendMessage">
           <span v-if="session === undefined">Checking your account…</span>
-          <button v-else-if="session === null" type="button" :disabled="accountBusy"
-            @click="logIn">Log in to chat</button>
+          <span v-else-if="session && profilesError">Could not load profiles. Retrying…</span>
+          <span v-else-if="session && profilesLoading">Loading profiles…</span>
+          <a v-else-if="!myProfile" :href="editorHref">{{ session === null
+            ? 'Log in to introduce yourself' : 'Introduce yourself to chat' }}</a>
           <template v-else>
             <textarea ref="messageInput" v-model="draft" rows="1"
               aria-label="Message" placeholder="Message" autocomplete="off" maxlength="1000"
@@ -1498,7 +2946,6 @@
               @keydown="onComposerKeydown"></textarea>
           </template>
         </form>
-        <p v-if="accountError" role="alert">{{ accountError }}</p>
       </section>
     </template>
   </body>
