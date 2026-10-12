@@ -160,8 +160,6 @@
           versions.value.indexOf(adminVersion.value) < versions.value.indexOf(myVersion.value)
         );
 
-        // The HTML runs in a separate permission scope. Change its ID when
-        // its contents change so permissions from old code are not reused.
         const displayed = ref(null);
         const mediaError = ref("");
         let load = 0;
@@ -176,13 +174,8 @@
               types: ["text/html"],
             });
             const html = await media.data.text();
-            const digest = await crypto.subtle.digest(
-              "SHA-256", new TextEncoder().encode(html)
-            );
             if (currentLoad !== load) return;
-            const id = [...new Uint8Array(digest)]
-              .map((byte) => byte.toString(16).padStart(2, "0")).join("");
-            displayed.value = { html, id, versionUrl: version.url };
+            displayed.value = { html, versionUrl: version.url };
           } catch (error) {
             if (currentLoad === load) mediaError.value = error.message || String(error);
           }
@@ -337,7 +330,7 @@
           class="site-status" role="status">
           <h2 class="dots">Loading</h2>
         </section>
-        <sw-transclude v-else :id="displayed.id" :name="siteName"
+        <sw-transclude v-else :name="siteName" permission-scope="inherit"
           :srcdoc="displayed.html" :query="siteQuery" route=""
           :autosize="viewportRoute ? 'off' : 'height'">
         </sw-transclude>
